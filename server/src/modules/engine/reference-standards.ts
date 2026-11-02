@@ -1,4 +1,9 @@
-import type { ReferenceStatus, ScientificCitation } from './types.js';
+import type {
+  AuthorityCitation,
+  AuthoritySourcedValue,
+  ReferenceStatus,
+  ScientificCitation,
+} from './types.js';
 
 export interface RegulatoryStandardSet {
   standardId: string;
@@ -18,6 +23,111 @@ export interface RegulatoryStandardSet {
     addedSugarG: number;
     addedFatG: number;
     saltMg: number;
+  };
+}
+
+export const AUTHORITY_CITATIONS: Record<string, AuthorityCitation> = {
+  ICMR_NIN_TABLE_15_1: {
+    sourceId: 'ICMR_NIN_DGI_2024',
+    authority: 'ICMR-NIN',
+    documentTitle: 'Dietary Guidelines for Indians 2024',
+    clauseOrTable: 'Table 15.1 (Thresholds for foods and beverages high in fat, sugar or salt)',
+    versionOrYear: '2024',
+    status: 'ICMR_NIN_GUIDELINE',
+    officialUrl: 'https://www.nin.res.in/dietaryguidelines/dgi_2024.pdf',
+  },
+  ICMR_NIN_DAILY_LIMITS: {
+    sourceId: 'ICMR_NIN_DGI_2024',
+    authority: 'ICMR-NIN',
+    documentTitle: 'Dietary Guidelines for Indians 2024',
+    clauseOrTable: 'Guideline 1 (Daily Reference Intake for Indian Adults)',
+    versionOrYear: '2024',
+    status: 'ICMR_NIN_GUIDELINE',
+    officialUrl: 'https://www.nin.res.in/dietaryguidelines/dgi_2024.pdf',
+  },
+  FSSAI_LABELLING_2020: {
+    sourceId: 'FSSAI_LABELLING_2020',
+    authority: 'FSSAI',
+    documentTitle: 'Food Safety and Standards (Labelling and Display) Regulations, 2020',
+    clauseOrTable: 'Schedule II & Regulation 5(3) (Nutrition Information & %RDA Table)',
+    versionOrYear: '2020',
+    status: 'FSSAI_GAZETTED_MANDATORY',
+    officialUrl: 'https://www.fssai.gov.in/upload/uploadfiles/files/Gazette_Notification_Labelling_Display_18_11_2020.pdf',
+  },
+  FSSAI_QUID_5_2_G: {
+    sourceId: 'FSSAI_LABELLING_2020',
+    authority: 'FSSAI',
+    documentTitle: 'Food Safety and Standards (Labelling and Display) Regulations, 2020',
+    clauseOrTable: 'Regulation 5(2)(g) (Quantitative Ingredient Declaration)',
+    versionOrYear: '2020',
+    status: 'FSSAI_GAZETTED_MANDATORY',
+    officialUrl: 'https://www.fssai.gov.in/upload/uploadfiles/files/Gazette_Notification_Labelling_Display_18_11_2020.pdf',
+  },
+  FSSAI_COMPOUND_5_2_E: {
+    sourceId: 'FSSAI_LABELLING_2020',
+    authority: 'FSSAI',
+    documentTitle: 'Food Safety and Standards (Labelling and Display) Regulations, 2020',
+    clauseOrTable: 'Regulation 5(2)(e) (Compound Ingredients 5% Rule)',
+    versionOrYear: '2020',
+    status: 'FSSAI_GAZETTED_MANDATORY',
+    officialUrl: 'https://www.fssai.gov.in/upload/uploadfiles/files/Gazette_Notification_Labelling_Display_18_11_2020.pdf',
+  },
+  FSSAI_WARNINGS_SCHEDULE_II: {
+    sourceId: 'FSSAI_LABELLING_2020',
+    authority: 'FSSAI',
+    documentTitle: 'Food Safety and Standards (Labelling and Display) Regulations, 2020',
+    clauseOrTable: 'Schedule II (Mandatory Declarations and Warnings)',
+    versionOrYear: '2020',
+    status: 'FSSAI_GAZETTED_MANDATORY',
+    officialUrl: 'https://www.fssai.gov.in/upload/uploadfiles/files/Gazette_Notification_Labelling_Display_18_11_2020.pdf',
+  },
+  FSSAI_ENERGY_EQUATION: {
+    sourceId: 'FSSAI_LABELLING_2020',
+    authority: 'FSSAI',
+    documentTitle: 'Food Safety and Standards (Labelling and Display) Regulations, 2020',
+    clauseOrTable: 'Regulation 5(3)(e) (Calculation of Energy and Conversion Factors)',
+    versionOrYear: '2020',
+    status: 'FSSAI_GAZETTED_MANDATORY',
+    officialUrl: 'https://www.fssai.gov.in/upload/uploadfiles/files/Gazette_Notification_Labelling_Display_18_11_2020.pdf',
+  },
+  FSSAI_SCHOOL_DRAFT_2026: {
+    sourceId: 'FSSAI_SCHOOL_FOOD_DRAFT_2026',
+    authority: 'FSSAI',
+    documentTitle: 'Draft Food Safety and Standards (Foods for School Children) Amendment Regulations, 2026',
+    clauseOrTable: 'Draft Notification 10 August 2026',
+    versionOrYear: '2026',
+    status: 'FSSAI_DRAFT_PROPOSAL',
+    officialUrl: 'https://www.fssai.gov.in',
+  },
+  WHO_NSS_2023: {
+    sourceId: 'WHO_2023_NSS',
+    authority: 'WHO',
+    documentTitle: 'WHO guideline on use of non-sugar sweeteners',
+    clauseOrTable: 'Executive Summary & Recommendations',
+    versionOrYear: '2023',
+    status: 'WHO_CODEX_STANDARD',
+    officialUrl: 'https://www.who.int/publications/i/item/9789240073616',
+  },
+  ICMR_NIN_TABLE_15_2_PROCESSING: {
+    sourceId: 'ICMR_NIN_DGI_2024',
+    authority: 'ICMR-NIN',
+    documentTitle: 'Dietary Guidelines for Indians 2024',
+    clauseOrTable: 'Table 15.2 (Classification of foods by degree of industrial processing)',
+    versionOrYear: '2024',
+    status: 'ICMR_NIN_GUIDELINE',
+    officialUrl: 'https://www.nin.res.in/dietaryguidelines/dgi_2024.pdf',
+  },
+};
+
+export function authorityValue<T>(
+  value: T,
+  unit: AuthoritySourcedValue<T>['unit'],
+  citationKey: keyof typeof AUTHORITY_CITATIONS
+): AuthoritySourcedValue<T> {
+  return {
+    value,
+    unit,
+    citation: AUTHORITY_CITATIONS[citationKey],
   };
 }
 

@@ -31,7 +31,83 @@ export type NutritionField =
   | 'cholesterolMg'
   | 'sodiumMg'
   | 'saltG'
-  | 'fiberG';
+  | 'fiberG'
+  | 'polyolsG';
+
+export type RegulatoryStatus =
+  | 'FSSAI_GAZETTED_MANDATORY'
+  | 'FSSAI_DRAFT_PROPOSAL'
+  | 'ICMR_NIN_GUIDELINE'
+  | 'IFCT_2017_COMPOSITION'
+  | 'WHO_CODEX_STANDARD';
+
+export interface AuthorityCitation {
+  sourceId: string;
+  authority: 'FSSAI' | 'ICMR-NIN' | 'WHO' | 'CODEX';
+  documentTitle: string;
+  clauseOrTable: string;
+  versionOrYear: string;
+  status: RegulatoryStatus;
+  officialUrl: string;
+}
+
+export interface AuthoritySourcedValue<T> {
+  value: T;
+  unit: 'g/100g' | 'g/100ml' | 'mg/100g' | 'kcal/100g' | '%RDA' | 'g/day' | 'mg/day' | 'kcal/g' | 'mg/L' | '%';
+  citation: AuthorityCitation;
+}
+
+export type FunctionalClass =
+  | 'ACIDITY_REGULATOR'
+  | 'ANTICAKING_AGENT'
+  | 'ANTIOXIDANT'
+  | 'COLOUR'
+  | 'COLOUR_RETENTION_AGENT'
+  | 'EMULSIFIER'
+  | 'EMULSIFYING_SALT'
+  | 'FIRMING_AGENT'
+  | 'FLAVOUR_ENHANCER'
+  | 'FLOUR_TREATMENT_AGENT'
+  | 'FOAMING_AGENT'
+  | 'GELLING_AGENT'
+  | 'GLAZING_AGENT'
+  | 'HUMECTANT'
+  | 'PRESERVATIVE'
+  | 'PROPELLANT'
+  | 'RAISING_AGENT'
+  | 'SEQUESTRANT'
+  | 'STABILIZER'
+  | 'SWEETENER'
+  | 'THICKENER'
+  | 'NATURAL_BASE_INGREDIENT';
+
+export type ProcessingClassification =
+  | 'GROUP_A_MINIMALLY_PROCESSED'   // ICMR-NIN 2024 Table 15.2 / NOVA 1
+  | 'GROUP_B_CULINARY_INGREDIENT'   // ICMR-NIN 2024 Table 15.2 / NOVA 2
+  | 'GROUP_C_ULTRA_PROCESSED';      // Cosmetic additives, industrial UPF markers
+
+export interface StatutoryWarningTrigger {
+  ruleId: string;
+  substance: string;
+  mandatoryDeclaration: string;
+  regulatoryReference: string;
+  isTriggered: boolean;
+}
+
+export interface QuidAuditResult {
+  hasEmphasizedIngredients: boolean;
+  emphasizedIngredients: string[];
+  compliantDeclarations: Array<{ ingredient: string; percentage: number }>;
+  nonCompliantDeclarations: Array<{ ingredient: string; reason: string }>;
+  compoundIngredients: Array<{
+    name: string;
+    percentage?: number;
+    hasSubList: boolean;
+    isCompliant: boolean;
+    reason?: string;
+  }>;
+  summary: string[];
+}
 
 export interface NutritionEvidence {
   kind: NutritionEvidenceKind;
@@ -116,6 +192,7 @@ export interface RawNutritionInput {
   sodiumMg?: number;
   saltG?: number;
   fiberG?: number;
+  polyolsG?: number;
   ingredientsText?: string;
   insAdditives?: string[];
   /** Field-level evidence. Missing evidence means the value is unverified. */
@@ -141,6 +218,7 @@ export interface NormalizedNutrition {
     sodiumMg: number | null;
     saltG: number | null;
     fiberG: number | null;
+    polyolsG: number | null;
   };
   perServing: {
     servingSizeGrams: number | null;
@@ -159,6 +237,7 @@ export interface NormalizedNutrition {
     sodiumMg: number | null;
     saltG: number | null;
     fiberG: number | null;
+    polyolsG: number | null;
   };
 }
 
@@ -170,6 +249,7 @@ export interface ConsistencyAuditResult {
     discrepancyPercent: number | null;
     passed: boolean;
     reason: string;
+    fssaiEquationUsed?: string;
   };
   massConservation: {
     totalMacroGramsPer100g: number | null;
@@ -179,6 +259,12 @@ export interface ConsistencyAuditResult {
   labelConsistency: {
     passed: boolean;
     notes: string[];
+  };
+  stapleBoundsCheck?: {
+    isStaple: boolean;
+    matchedFoodCode?: string;
+    passed: boolean;
+    reason?: string;
   };
   overallConfidence: 'HIGH' | 'SUSPECT' | 'CORRUPT';
 }
@@ -214,6 +300,12 @@ export interface DecodedIngredient {
   normalizedName: string;
   category: 'BASE_FOOD' | 'ADDED_SUGAR' | 'HIGH_GI_CARB' | 'FAT_OIL' | 'ADDITIVE' | 'UNCLASSIFIED';
   insCode?: string;
+  functionalClass?: FunctionalClass;
+  processingGroup?: ProcessingClassification;
+  statutoryWarnings?: string[];
+  declaredPercentage?: number; // QUID % w/w or % v/v
+  subIngredients?: string[];   // For compound ingredients
+  quidNonCompliance?: string;
   allergenTags: string[];
   advisoryTags?: string[];
   allergenStatus?: 'CONTAINS' | 'MAY_CONTAIN' | 'FREE_FROM' | 'NONE';
@@ -279,6 +371,14 @@ export interface CompleteEvaluationOutput {
   evaluability: EvaluabilityReport;
   assessment: AssessmentDescriptor;
   claimsAudit?: MarketingClaimsAudit;
+  quidAudit?: QuidAuditResult;
+  statutoryWarnings?: StatutoryWarningTrigger[];
+  processingClassificationSummary?: {
+    groupACount: number;
+    groupBCount: number;
+    groupCCount: number;
+    isUltraProcessed: boolean;
+  };
   normalizedNutrition: NormalizedNutrition;
   table151HfssChecks: Table151CheckResult[];
   /** NOT_EVALUABLE means the UI must not show a green/amber health badge. */
@@ -307,6 +407,14 @@ export interface CompleteEvaluationOutput {
     advisoryTags: string[];
     mayContainAllergenTags: string[];
     freeFromClaims: string[];
+    statutoryWarningsTriggered?: StatutoryWarningTrigger[];
+    quidAudit?: QuidAuditResult;
+    processingClassificationSummary?: {
+      groupACount: number;
+      groupBCount: number;
+      groupCCount: number;
+      isUltraProcessed: boolean;
+    };
   };
   familyVerdicts: PersonaVerdict[];
   practicalTip: string;

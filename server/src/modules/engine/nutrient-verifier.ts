@@ -4,6 +4,7 @@ import type {
   ConsistencyAuditResult,
   DeclaredValueSource,
 } from './types.js';
+import { IfctRegistry } from './ifct-registry.js';
 
 const ATWATER_HIGH_TOLERANCE = 0.08; // <= 8% Pass (HIGH confidence)
 const ATWATER_MAX_TOLERANCE = 0.20;  // 8% - 20% Warning (SUSPECT); > 20% Fail (CORRUPT)
@@ -46,6 +47,7 @@ export class NutrientVerifier {
     const transFat = this.valueOrNull(raw.transFatG);
     const cholesterol = this.valueOrNull(raw.cholesterolMg);
     const fiber = this.valueOrNull(raw.fiberG);
+    const polyols = this.valueOrNull(raw.polyolsG);
     const protein = this.valueOrNull(raw.proteinG);
     const carbs = this.valueOrNull(raw.carbsG);
     const energy = this.valueOrNull(raw.energyKcal);
@@ -66,6 +68,7 @@ export class NutrientVerifier {
       sodiumMg,
       saltG,
       fiberG: fiber,
+      polyolsG: polyols,
     };
 
     const perServing = {
@@ -85,6 +88,7 @@ export class NutrientVerifier {
       sodiumMg: this.scaleForServing(sodiumMg, factorToServing, 1),
       saltG: this.scaleForServing(saltG, factorToServing, 2),
       fiberG: this.scaleForServing(fiber, factorToServing, 1),
+      polyolsG: this.scaleForServing(polyols, factorToServing, 1),
     };
 
     return { basis, per100g, perServing };
@@ -100,7 +104,10 @@ export class NutrientVerifier {
   }
 
   /** Evaluates packaging-label mathematical plausibility without inventing data. */
-  public static auditConsistency(normalized: NormalizedNutrition): ConsistencyAuditResult {
+  public static auditConsistency(
+    normalized: NormalizedNutrition,
+    context?: { productName?: string; category?: string; isGenericFood?: boolean }
+  ): ConsistencyAuditResult {
     const p = normalized.per100g;
     const notes: string[] = [];
 
@@ -108,24 +115,49 @@ export class NutrientVerifier {
     const energyAvailable = p.energyKcal !== null;
 
     /**
-     * Standard label Atwater check: 4 kcal/g protein, 4 kcal/g carbohydrate,
-     * 9 kcal/g fat. Fibre is deliberately not added: Indian labels commonly
-     * include fibre within the carbohydrate line, and adding 2 kcal/g again
-     * would double-count it. The 20% tolerance covers label rounding and
-     * carbohydrate/fibre conventions.
+     * Energy Calculation:
+     * Standard Indian label Atwater check: 4 kcal/g protein, 4 kcal/g carbohydrate, 9 kcal/g fat.
+     * FSSAI Regulation 5(3)(e): 4(Protein) + 4(Carbs - Fibre - Polyols) + 2(Fibre + Polyols) + 9(Total Fat).
+     * If declared energy matches the FSSAI fibre/polyol-adjusted formula closer, use it.
      */
-    const calculatedKcal = macrosAvailable
+    const fiber = p.fiberG ?? 0;
+    const polyols = p.polyolsG ?? 0;
+    const hasFiberOrPolyols = p.fiberG !== null || p.polyolsG !== null;
+
+    const standardKcal = macrosAvailable
       ? Number((p.proteinG! * 4 + p.carbsG! * 4 + p.totalFatG! * 9).toFixed(1))
       : null;
+    const fssaiKcal = macrosAvailable && hasFiberOrPolyols
+      ? Number((
+          p.proteinG! * 4 +
+          Math.max(0, p.carbsG! - fiber - polyols) * 4 +
+          (fiber + polyols) * 2 +
+          p.totalFatG! * 9
+        ).toFixed(1))
+      : standardKcal;
+
     const declaredKcal = p.energyKcal;
-    const discrepancyRatio = energyAvailable && calculatedKcal !== null
-      ? declaredKcal! > 0
-        ? Math.abs(calculatedKcal - declaredKcal!) / declaredKcal!
-        // A declared zero-energy product cannot contain non-zero macros.
-        : calculatedKcal > 0
-          ? 1
-          : 0
-      : null;
+    let calculatedKcal = standardKcal;
+    let discrepancyRatio: number | null = null;
+    let fssaiEquationUsed = 'Standard Atwater: 4(Protein) + 4(Carbohydrates) + 9(Total Fat)';
+
+    if (energyAvailable && calculatedKcal !== null && declaredKcal !== null) {
+      if (declaredKcal === 0) {
+        discrepancyRatio = standardKcal! > 0 ? 1 : 0;
+      } else {
+        const ratioStandard = Math.abs(standardKcal! - declaredKcal) / declaredKcal;
+        const ratioFssai = fssaiKcal !== null ? Math.abs(fssaiKcal - declaredKcal) / declaredKcal : ratioStandard;
+        if (ratioFssai < ratioStandard && ratioStandard > ATWATER_HIGH_TOLERANCE) {
+          calculatedKcal = fssaiKcal;
+          discrepancyRatio = ratioFssai;
+          fssaiEquationUsed = 'FSSAI Regulation 5(3)(e): 4(Protein) + 4(Carbs - Fibre - Polyols) + 2(Fibre + Polyols) + 9(Total Fat)';
+        } else {
+          calculatedKcal = standardKcal;
+          discrepancyRatio = ratioStandard;
+        }
+      }
+    }
+
     const discrepancyPercent = discrepancyRatio === null ? null : Number((discrepancyRatio * 100).toFixed(1));
     const atwaterPassed = discrepancyRatio !== null && discrepancyRatio <= ATWATER_MAX_TOLERANCE;
     const atwaterHighConfidence = discrepancyRatio !== null && discrepancyRatio <= ATWATER_HIGH_TOLERANCE;
@@ -133,12 +165,13 @@ export class NutrientVerifier {
     if (discrepancyRatio === null) {
       notes.push('Energy or all required macronutrients were not declared; caloric consistency cannot be confirmed.');
     } else if (discrepancyRatio > ATWATER_MAX_TOLERANCE) {
+      const isAboveFiftyKcal = declaredKcal !== null && declaredKcal > 50;
       notes.push(
-        `Declared energy differs from the Atwater calculation by ${discrepancyPercent}% (exceeds ${ATWATER_MAX_TOLERANCE * 100}% tolerance limit; marked as corrupt).`
+        `${isAboveFiftyKcal ? 'UNVERIFIED_NUTRITION_TABLE_CONFLICT: ' : ''}Declared energy differs from the FSSAI Atwater calculation by ${discrepancyPercent}% (exceeds ${ATWATER_MAX_TOLERANCE * 100}% tolerance limit; marked as corrupt).`
       );
     } else if (!atwaterHighConfidence) {
       notes.push(
-        `Declared energy differs from the Atwater calculation by ${discrepancyPercent}% (within ${ATWATER_MAX_TOLERANCE * 100}% regulatory tolerance, but exceeds ${ATWATER_HIGH_TOLERANCE * 100}% high-confidence threshold).`
+        `Declared energy differs from the FSSAI Atwater calculation by ${discrepancyPercent}% (within ${ATWATER_MAX_TOLERANCE * 100}% regulatory tolerance, but exceeds ${ATWATER_HIGH_TOLERANCE * 100}% high-confidence threshold).`
       );
     }
 
@@ -151,15 +184,21 @@ export class NutrientVerifier {
           : `Caloric calculation is implausible (declared ${declaredKcal} kcal vs calculated ${calculatedKcal} kcal, ${discrepancyPercent}% difference exceeds the 20% tolerance limit).`;
 
     const massAvailable = macrosAvailable;
+    const sodiumG = p.sodiumMg !== null
+      ? p.sodiumMg / 1000.0
+      : p.saltG !== null
+        ? p.saltG * 0.4
+        : 0;
     const totalMacroGrams = massAvailable
       ? Number((p.proteinG! + p.carbsG! + p.totalFatG!).toFixed(1))
       : null;
-    const massPassed = totalMacroGrams !== null && totalMacroGrams <= 100.0;
+    const totalMassWithSodium = totalMacroGrams !== null ? Number((totalMacroGrams + sodiumG).toFixed(2)) : null;
+    const massPassed = totalMassWithSodium !== null && totalMassWithSodium <= 102.0;
     const massReason = massPassed
-      ? `Macronutrient total (${totalMacroGrams}g per 100g) is within physical limits.`
+      ? `Macronutrient total (${totalMacroGrams}g per 100g) is within physical limits (total including mineral mass: ${totalMassWithSodium}g <= 102.0g).`
       : totalMacroGrams === null
         ? 'Macronutrient mass cannot be checked because protein, carbohydrate, or fat is missing.'
-        : `Data error: Macronutrients total ${totalMacroGrams}g per 100g, physically exceeding package mass.`;
+        : `Data error: Macronutrients and minerals total ${totalMassWithSodium}g per 100g, physically exceeding package mass limit of 102.0g.`;
 
     const sugarInCarbsPassed = p.totalSugarG !== null && p.carbsG !== null && p.totalSugarG <= p.carbsG;
     if (!sugarInCarbsPassed) notes.push('Sugar/carbohydrate consistency cannot be confirmed or the declared sugar exceeds carbohydrates.');
@@ -200,15 +239,33 @@ export class NutrientVerifier {
       }
     }
 
+    // IFCT 2017 Staple Bounds Check
+    let stapleBoundsCheck: ConsistencyAuditResult['stapleBoundsCheck'] = undefined;
+    if (context?.productName) {
+      const check = IfctRegistry.validateStapleBounds(
+        context.productName,
+        context.category || '',
+        p.proteinG,
+        p.carbsG,
+        p.totalFatG,
+        context.isGenericFood
+      );
+      stapleBoundsCheck = check;
+      if (check.isStaple && !check.passed) {
+        notes.push(check.reason || 'Staple bounds violation against IFCT 2017');
+      }
+    }
+
     const labelConsistencyPassed = sugarInCarbsPassed
       && addedInTotalSugarPassed
       && fatComponentsPassed
       && sodiumSaltPassed;
 
     let overallConfidence: 'HIGH' | 'SUSPECT' | 'CORRUPT' = 'HIGH';
-    if ((totalMacroGrams !== null && totalMacroGrams > 100.0)
+    if ((totalMacroGrams !== null && totalMacroGrams > 102.0)
       || (discrepancyRatio !== null && discrepancyRatio > ATWATER_MAX_TOLERANCE)
-      || sodiumSaltMismatch) {
+      || sodiumSaltMismatch
+      || (stapleBoundsCheck?.isStaple && !stapleBoundsCheck.passed)) {
       overallConfidence = 'CORRUPT';
     } else if (!atwaterHighConfidence || !labelConsistencyPassed) {
       overallConfidence = 'SUSPECT';
@@ -222,6 +279,7 @@ export class NutrientVerifier {
         discrepancyPercent,
         passed: atwaterPassed,
         reason: atwaterReason,
+        fssaiEquationUsed,
       },
       massConservation: {
         totalMacroGramsPer100g: totalMacroGrams,
@@ -232,6 +290,7 @@ export class NutrientVerifier {
         passed: labelConsistencyPassed,
         notes,
       },
+      stapleBoundsCheck,
       overallConfidence,
     };
   }

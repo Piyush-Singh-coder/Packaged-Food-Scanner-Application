@@ -45,7 +45,27 @@ export const NUTRITION_SOURCE_REGISTRY: Readonly<Record<string, NutritionSourceD
     year: 2020,
     authority: 'OFFICIAL_BODY',
     notes:
-      'Statutory labelling and %RDA reference context. Its per-day reference values are not health limits.',
+      'Statutory labelling, QUID, Schedule II warnings, and %RDA reference context. Its per-day reference values are not health limits.',
+  },
+  FSSAI_ADDITIVES_2011: {
+    sourceId: 'FSSAI_ADDITIVES_2011',
+    kind: 'OFFICIAL_RESEARCH_TABLE',
+    publisher: 'Food Safety and Standards Authority of India',
+    title: 'Food Safety and Standards (Food Products Standards and Food Additives) Regulations, 2011',
+    year: 2011,
+    authority: 'OFFICIAL_BODY',
+    notes:
+      'Codex/FSSAI Functional Classes and INS Additive Appendix A specifications.',
+  },
+  FSSAI_CLAIMS_2018: {
+    sourceId: 'FSSAI_CLAIMS_2018',
+    kind: 'OFFICIAL_RESEARCH_TABLE',
+    publisher: 'Food Safety and Standards Authority of India',
+    title: 'Food Safety and Standards (Advertising and Claims) Regulations, 2018',
+    year: 2018,
+    authority: 'OFFICIAL_BODY',
+    notes:
+      'Statutory thresholds for front-of-pack claims including No Added Sugar, High Protein, and High Fibre.',
   },
   FSSAI_SCHOOL_FOOD_DRAFT_2026: {
     sourceId: 'FSSAI_SCHOOL_FOOD_DRAFT_2026',

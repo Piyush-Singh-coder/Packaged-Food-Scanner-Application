@@ -67,7 +67,11 @@ export class EvaluationService {
    */
   public static evaluate(rawInput: RawNutritionInput): CompleteEvaluationOutput {
     const normalized = NutrientVerifier.normalize(rawInput);
-    const consistencyAudit = NutrientVerifier.auditConsistency(normalized);
+    const consistencyAudit = NutrientVerifier.auditConsistency(normalized, {
+      productName: rawInput.productName,
+      category: rawInput.category,
+      isGenericFood: rawInput.nutritionContext === 'GENERIC_FOOD',
+    });
     const sourceIntegrity = SourceBackedNutritionEngine.inspect(rawInput);
 
     const per100 = normalized.per100g;
@@ -172,7 +176,13 @@ export class EvaluationService {
       },
     ];
 
-    const ingredientsAnalysis = IngredientParser.parse(rawInput.ingredientsText);
+    const claimsAudit = ClaimsVerifier.verifyClaims(rawInput, normalized);
+    const claimStrings = claimsAudit.assessedClaims.map((c) => c.claim);
+    const ingredientsAnalysis = IngredientParser.parse(
+      rawInput.ingredientsText,
+      rawInput.productName,
+      claimStrings
+    );
     const dailyAdult = REFERENCE_STANDARDS.ICMR_NIN_2024_ADULT_DAILY;
 
     const sodiumPercentDv = serving.sodiumMg !== null
@@ -552,11 +562,26 @@ export class EvaluationService {
     const practicalTip = 'Compare the per-100 g or per-100 ml values with other products in the same aisle, and use the declared serving size rather than the whole pack.';
     const betterAlternativesSuggestion = 'Use the swap endpoint to compare verified products in the same category; an unverified product is never ranked as a healthier alternative.';
 
-    const claimsAudit = ClaimsVerifier.verifyClaims(rawInput, normalized);
     for (const alert of claimsAudit.summary) {
       if (alert.startsWith('⚠️')) {
         whySummary.push(alert);
       }
+    }
+    for (const alert of ingredientsAnalysis.quidAudit.summary) {
+      if (alert.startsWith('⚠️') && !whySummary.includes(alert)) {
+        whySummary.push(alert);
+      }
+    }
+    for (const warn of ingredientsAnalysis.statutoryWarningsTriggered) {
+      const wText = `Statutory Warning: ${warn.mandatoryDeclaration}`;
+      if (!whySummary.includes(wText)) {
+        whySummary.push(wText);
+      }
+    }
+    if (ingredientsAnalysis.processingClassificationSummary.isUltraProcessed) {
+      whySummary.push(
+        `Contains ${ingredientsAnalysis.processingClassificationSummary.groupCCount} ultra-processed food marker(s) / cosmetic additive(s) (ICMR-NIN 2024 Table 15.2 Group C).`
+      );
     }
 
     return {
@@ -575,6 +600,9 @@ export class EvaluationService {
       evaluability,
       assessment,
       claimsAudit,
+      quidAudit: ingredientsAnalysis.quidAudit,
+      statutoryWarnings: ingredientsAnalysis.statutoryWarningsTriggered,
+      processingClassificationSummary: ingredientsAnalysis.processingClassificationSummary,
       normalizedNutrition: normalized,
       table151HfssChecks,
       frequencyGrade,

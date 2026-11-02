@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { validateFssaiLicense, extractFssaiLicensesFromText } from '../src/common/utils/fssai.js';
 import { ClaimsVerifier } from '../src/modules/engine/claims-verifier.js';
 import { NutrientVerifier } from '../src/modules/engine/nutrient-verifier.js';
+import { IngredientParser } from '../src/modules/engine/ingredient-parser.js';
+import { IfctRegistry } from '../src/modules/engine/ifct-registry.js';
 import type { RawNutritionInput } from '../src/modules/engine/types.js';
 import { OcrParser } from '../src/modules/ocr/ocr.parser.js';
 
@@ -463,6 +465,207 @@ describe('Advanced Product Intelligence Features', () => {
       };
       const keyFallback = (reqWithoutDevice.headers as any)['x-device-id'] || reqWithoutDevice.ip;
       assert.strictEqual(keyFallback, '103.21.124.5');
+    });
+  });
+
+  describe('7. Codex / FSSAI Functional Classes & Chemical Name Normalization', () => {
+    test('normalizes both INS codes and chemical names to official FunctionalClass', () => {
+      const parsed = IngredientParser.parse(
+        'Sodium Benzoate, INS 102, Citric Acid, INS 322, Aspartame, Monosodium Glutamate, INS 415, Sodium Bicarbonate'
+      );
+
+      const preservative = parsed.decoded.find((d) => d.normalizedName.includes('211'));
+      assert.ok(preservative);
+      assert.strictEqual(preservative.functionalClass, 'PRESERVATIVE');
+      assert.strictEqual(preservative.processingGroup, 'GROUP_C_ULTRA_PROCESSED');
+
+      const colour = parsed.decoded.find((d) => d.insCode === '102');
+      assert.ok(colour);
+      assert.strictEqual(colour.functionalClass, 'COLOUR');
+      assert.strictEqual(colour.processingGroup, 'GROUP_C_ULTRA_PROCESSED');
+
+      const acidulant = parsed.decoded.find((d) => d.normalizedName.includes('330'));
+      assert.ok(acidulant);
+      assert.strictEqual(acidulant.functionalClass, 'ACIDITY_REGULATOR');
+      assert.strictEqual(acidulant.processingGroup, 'GROUP_B_CULINARY_INGREDIENT');
+
+      const emulsifier = parsed.decoded.find((d) => d.insCode?.startsWith('322'));
+      assert.ok(emulsifier);
+      assert.strictEqual(emulsifier.functionalClass, 'EMULSIFIER');
+
+      const sweetener = parsed.decoded.find((d) => d.insCode === '951');
+      assert.ok(sweetener);
+      assert.strictEqual(sweetener.functionalClass, 'SWEETENER');
+
+      const flavourEnhancer = parsed.decoded.find((d) => d.insCode === '621');
+      assert.ok(flavourEnhancer);
+      assert.strictEqual(flavourEnhancer.functionalClass, 'FLAVOUR_ENHANCER');
+
+      const thickener = parsed.decoded.find((d) => d.insCode === '415');
+      assert.ok(thickener);
+      assert.strictEqual(thickener.functionalClass, 'THICKENER');
+
+      const raisingAgent = parsed.decoded.find((d) => d.insCode?.startsWith('500'));
+      assert.ok(raisingAgent);
+      assert.strictEqual(raisingAgent.functionalClass, 'RAISING_AGENT');
+    });
+  });
+
+  describe('8. Statutory Warning Triggers (FSSAI Schedule II)', () => {
+    test('triggers polyol laxative warning for Sorbitol, Maltitol, and Xylitol', () => {
+      const parsed = IngredientParser.parse('Wheat flour, Maltitol, Sorbitol (INS 420), Palm oil');
+      assert.ok(parsed.statutoryWarningsTriggered.length > 0);
+      const polyolWarning = parsed.statutoryWarningsTriggered.find((w) =>
+        w.mandatoryDeclaration.includes('Polyols may have laxative effect')
+      );
+      assert.ok(polyolWarning);
+      assert.strictEqual(polyolWarning.regulatoryReference, 'FSSAI (Labelling and Display) Regulations 2020, Schedule II');
+    });
+
+    test('triggers artificial sweetener warnings including Aspartame PKU statement', () => {
+      const parsed = IngredientParser.parse('Water, Aspartame, Acesulfame Potassium, Acidity Regulator (INS 330)');
+      const aspartameWarning = parsed.statutoryWarningsTriggered.find((w) =>
+        w.substance.includes('951') && w.mandatoryDeclaration.includes('Phenylketonurics: Contains Phenylalanine')
+      );
+      assert.ok(aspartameWarning);
+      assert.ok(aspartameWarning.mandatoryDeclaration.includes('Not recommended for children'));
+
+      const aceKWarning = parsed.statutoryWarningsTriggered.find((w) =>
+        w.substance.includes('950') && w.mandatoryDeclaration.includes('Contains Acesulfame Potassium')
+      );
+      assert.ok(aceKWarning);
+    });
+
+    test('triggers Monosodium Glutamate (MSG) warning for infants and pregnant women', () => {
+      const parsed = IngredientParser.parse('Noodles, Seasoning [Salt, Monosodium Glutamate, Spices]');
+      const msgWarning = parsed.statutoryWarningsTriggered.find((w) =>
+        w.mandatoryDeclaration.includes('Not recommended for infants below 12 months and pregnant women')
+      );
+      assert.ok(msgWarning);
+    });
+
+    test('triggers Caffeine advisory declaration', () => {
+      const parsed = IngredientParser.parse('Carbonated Water, Sugar, Caffeine, Colour (INS 150d)');
+      const caffeineWarning = parsed.statutoryWarningsTriggered.find((w) =>
+        w.mandatoryDeclaration.includes('Contains Caffeine')
+      );
+      assert.ok(caffeineWarning);
+    });
+  });
+
+  describe('9. ICMR-NIN 2024 Table 15.2 Processing Classification', () => {
+    test('classifies whole foods as Group A and culinary ingredients as Group B', () => {
+      const parsed = IngredientParser.parse('Whole Wheat Flour (Atta), Cow Milk, Turmeric, Cumin, Sugar, Iodised Salt, Ghee');
+      assert.ok(parsed.processingClassificationSummary.groupACount >= 4); // Wheat, Milk, Turmeric, Cumin
+      assert.ok(parsed.processingClassificationSummary.groupBCount >= 3); // Sugar, Salt, Ghee
+      assert.strictEqual(parsed.processingClassificationSummary.groupCCount, 0);
+      assert.strictEqual(parsed.processingClassificationSummary.isUltraProcessed, false);
+    });
+
+    test('identifies Group C ultra-processed markers and flags isUltraProcessed', () => {
+      const parsed = IngredientParser.parse(
+        'Refined Wheat Flour, Hydrogenated Vegetable Oil, High Fructose Corn Syrup, Invert Sugar, INS 102, INS 471, Maltodextrin'
+      );
+      assert.ok(parsed.processingClassificationSummary.groupCCount >= 5);
+      assert.strictEqual(parsed.processingClassificationSummary.isUltraProcessed, true);
+    });
+  });
+
+  describe('10. Quantitative Ingredient Declaration (QUID) & Compound 5% Rule', () => {
+    test('verifies QUID compliance when emphasized ingredient declares percentage', () => {
+      const parsed = IngredientParser.parse(
+        'Whole Wheat Flour (Atta) (48%), Oats (20%), Sugar, Palm Oil',
+        'Oats & Wheat Digestive Biscuits'
+      );
+      assert.strictEqual(parsed.quidAudit.hasEmphasizedIngredients, true);
+      const oatsDecl = parsed.quidAudit.compliantDeclarations.find((d) => d.ingredient === 'oats');
+      assert.ok(oatsDecl);
+      assert.strictEqual(oatsDecl.percentage, 20);
+    });
+
+    test('flags statutory QUID non-compliance when emphasized ingredient lacks percentage', () => {
+      const parsed = IngredientParser.parse(
+        'Refined Wheat Flour, Sugar, Palm Oil, Almonds, Honey',
+        'Real Almond & Honey Crunch Cookies'
+      );
+      assert.strictEqual(parsed.quidAudit.hasEmphasizedIngredients, true);
+      const almondBreach = parsed.quidAudit.nonCompliantDeclarations.find((d) => d.ingredient === 'almond');
+      assert.ok(almondBreach);
+      assert.ok(almondBreach.reason.includes('Regulation 5(2)(g)'));
+
+      const honeyBreach = parsed.quidAudit.nonCompliantDeclarations.find((d) => d.ingredient === 'honey');
+      assert.ok(honeyBreach);
+      assert.ok(honeyBreach.reason.includes('Regulation 5(2)(g)'));
+    });
+
+    test('flags non-compliance when compound ingredient >= 5% lacks bracketed sub-list', () => {
+      const parsed = IngredientParser.parse(
+        'Refined Wheat Flour, Sugar, Choco Paste (12%), Palm Oil',
+        'Choco Filled Biscuits'
+      );
+      const nonCompliantCompound = parsed.quidAudit.compoundIngredients.find((c) => c.name.includes('Choco Paste'));
+      assert.ok(nonCompliantCompound);
+      assert.strictEqual(nonCompliantCompound.isCompliant, false);
+      assert.ok(nonCompliantCompound.reason?.includes('Regulation 5(2)(e)'));
+    });
+
+    test('passes compliance when compound ingredient >= 5% declares bracketed sub-list', () => {
+      const parsed = IngredientParser.parse(
+        'Wheat Flour, Choco Chips (10%) [Sugar, Cocoa Solids, Hydrogenated Vegetable Fat], Sugar',
+        'Choco Chip Cookies'
+      );
+      const compliantCompound = parsed.quidAudit.compoundIngredients.find((c) => c.name.includes('Choco Chips'));
+      assert.ok(compliantCompound);
+      assert.strictEqual(compliantCompound.isCompliant, true);
+    });
+  });
+
+  describe('11. Mass Conservation with Minerals & IFCT 2017 Staple Bounds Check', () => {
+    test('enforces mass balance limit of 102.0g including sodium and marks CORRUPT when breached', () => {
+      const impossibleMass = NutrientVerifier.normalize({
+        productName: 'Over-mass bar',
+        brand: 'Test',
+        category: 'Snacks',
+        form: 'SOLID',
+        nutritionBasis: 'PER_100G',
+        energyKcal: 500,
+        proteinG: 30,
+        carbsG: 50,
+        totalFatG: 25, // 30 + 50 + 25 = 105g > 102.0g!
+        sodiumMg: 1500, // + 1.5g = 106.5g
+      });
+
+      const audit = NutrientVerifier.auditConsistency(impossibleMass);
+      assert.strictEqual(audit.massConservation.passed, false);
+      assert.strictEqual(audit.overallConfidence, 'CORRUPT');
+    });
+
+    test('catches OCR hallucination when staple declared macros violate IFCT 2017 biological bounds', () => {
+      // Atta with 80g declared protein (IFCT A020 range is 6.0g - 18.0g)
+      const corruptedAtta = NutrientVerifier.normalize({
+        productName: 'Pure Whole Wheat Atta',
+        brand: 'Farm Fresh',
+        category: 'Cereals & Grains',
+        form: 'SOLID',
+        nutritionBasis: 'PER_100G',
+        energyKcal: 400,
+        proteinG: 80, // Impossible OCR hallucination!
+        carbsG: 15,
+        totalFatG: 2,
+        sodiumMg: 10,
+      });
+
+      const audit = NutrientVerifier.auditConsistency(corruptedAtta, {
+        productName: 'Pure Whole Wheat Atta',
+        category: 'Cereals & Grains',
+        isGenericFood: true,
+      });
+
+      assert.ok(audit.stapleBoundsCheck);
+      assert.strictEqual(audit.stapleBoundsCheck.isStaple, true);
+      assert.strictEqual(audit.stapleBoundsCheck.passed, false);
+      assert.ok(audit.stapleBoundsCheck.reason?.includes('UNVERIFIED_NUTRITION_TABLE_CONFLICT'));
+      assert.strictEqual(audit.overallConfidence, 'CORRUPT');
     });
   });
 });

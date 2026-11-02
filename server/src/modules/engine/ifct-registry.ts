@@ -219,6 +219,87 @@ export const ICMR_IFCT_2017_CATALOG: Readonly<Record<string, IfctFoodEntry>> = {
   },
 };
 
+export interface StapleBounds {
+  foodCode: string;
+  stapleName: string;
+  pattern: RegExp;
+  minProteinG: number;
+  maxProteinG: number;
+  minCarbsG: number;
+  maxCarbsG: number;
+  minFatG: number;
+  maxFatG: number;
+}
+
+export const STAPLE_BOUNDS_TABLE: readonly StapleBounds[] = [
+  {
+    foodCode: 'A020',
+    stapleName: 'Whole Wheat / Atta',
+    pattern: /\b(?:whole\s+wheat|atta|wheat\s+flour|gehun)\b/i,
+    minProteinG: 6.0,
+    maxProteinG: 18.0,
+    minCarbsG: 50.0,
+    maxCarbsG: 82.0,
+    minFatG: 0.5,
+    maxFatG: 4.5,
+  },
+  {
+    foodCode: 'A015',
+    stapleName: 'Raw Milled Rice',
+    pattern: /\b(?:raw\s+rice|milled\s+rice|white\s+rice|basmati\s+rice|chawal)\b/i,
+    minProteinG: 4.5,
+    maxProteinG: 13.0,
+    minCarbsG: 65.0,
+    maxCarbsG: 90.0,
+    minFatG: 0.1,
+    maxFatG: 3.0,
+  },
+  {
+    foodCode: 'L002',
+    stapleName: 'Cow Milk',
+    pattern: /\b(?:cow\s+milk|whole\s+milk|fresh\s+milk|toned\s+milk|gai\s+ka\s+doodh)\b/i,
+    minProteinG: 2.0,
+    maxProteinG: 6.0,
+    minCarbsG: 2.5,
+    maxCarbsG: 7.0,
+    minFatG: 0.5,
+    maxFatG: 10.0,
+  },
+  {
+    foodCode: 'H012',
+    stapleName: 'Groundnut / Peanuts',
+    pattern: /\b(?:groundnut|peanuts?|moongphali)\b/i,
+    minProteinG: 15.0,
+    maxProteinG: 35.0,
+    minCarbsG: 8.0,
+    maxCarbsG: 30.0,
+    minFatG: 28.0,
+    maxFatG: 55.0,
+  },
+  {
+    foodCode: 'B002',
+    stapleName: 'Bengal Gram / Kala Chana',
+    pattern: /\b(?:bengal\s+gram|kala\s+chana|besan|chana\s+dal)\b/i,
+    minProteinG: 12.0,
+    maxProteinG: 28.0,
+    minCarbsG: 28.0,
+    maxCarbsG: 60.0,
+    minFatG: 2.0,
+    maxFatG: 10.0,
+  },
+  {
+    foodCode: 'B021',
+    stapleName: 'Red Gram / Toor Dal',
+    pattern: /\b(?:red\s+gram|toor\s+dal|arhar\s+dal)\b/i,
+    minProteinG: 15.0,
+    maxProteinG: 30.0,
+    minCarbsG: 42.0,
+    maxCarbsG: 70.0,
+    minFatG: 0.5,
+    maxFatG: 4.5,
+  },
+];
+
 export class IfctRegistry {
   public static getByCode(code: string): IfctFoodEntry | undefined {
     const normalized = code.toUpperCase().replace(/^IFCT_/, '');
@@ -233,6 +314,72 @@ export class IfctRegistry {
         entry.commonIndianName?.toLowerCase().includes(q) ||
         entry.scientificName.toLowerCase().includes(q)
     );
+  }
+
+  /**
+   * Validates single-ingredient staples against biological bounds from IFCT 2017.
+   * Catches OCR transcription errors / hallucinations (e.g. 80g protein in wheat flour).
+   */
+  public static validateStapleBounds(
+    productName: string,
+    category: string,
+    proteinG: number | null,
+    carbsG: number | null,
+    totalFatG: number | null,
+    isGenericFood: boolean = false
+  ): { isStaple: boolean; matchedFoodCode?: string; passed: boolean; reason?: string } {
+    const text = `${productName} ${category}`.toLowerCase();
+    
+    // Check if it matches any staple definition
+    const matched = STAPLE_BOUNDS_TABLE.find((staple) => staple.pattern.test(text));
+    if (!matched) {
+      return { isStaple: false, passed: true };
+    }
+
+    // Only apply hard biological bounds if it's a staple commodity (not multi-ingredient composite like 'Wheat Cookies')
+    const isComposite = /\b(?:cookie|biscuit|noodle|snack|chip|namkeen|pasta|cake|bread|premix|mix|drink|beverage)\b/i.test(text);
+    if (isComposite && !isGenericFood) {
+      return { isStaple: false, passed: true };
+    }
+
+    const violations: string[] = [];
+    if (proteinG !== null) {
+      if (proteinG < matched.minProteinG || proteinG > matched.maxProteinG) {
+        violations.push(
+          `Declared protein (${proteinG}g/100g) violates biological range for ${matched.stapleName} (${matched.minProteinG}g - ${matched.maxProteinG}g/100g in IFCT 2017 [${matched.foodCode}]).`
+        );
+      }
+    }
+    if (carbsG !== null) {
+      if (carbsG < matched.minCarbsG || carbsG > matched.maxCarbsG) {
+        violations.push(
+          `Declared carbohydrate (${carbsG}g/100g) violates biological range for ${matched.stapleName} (${matched.minCarbsG}g - ${matched.maxCarbsG}g/100g in IFCT 2017 [${matched.foodCode}]).`
+        );
+      }
+    }
+    if (totalFatG !== null) {
+      if (totalFatG < matched.minFatG || totalFatG > matched.maxFatG) {
+        violations.push(
+          `Declared fat (${totalFatG}g/100g) violates biological range for ${matched.stapleName} (${matched.minFatG}g - ${matched.maxFatG}g/100g in IFCT 2017 [${matched.foodCode}]).`
+        );
+      }
+    }
+
+    if (violations.length > 0) {
+      return {
+        isStaple: true,
+        matchedFoodCode: matched.foodCode,
+        passed: false,
+        reason: `UNVERIFIED_NUTRITION_TABLE_CONFLICT: ${violations.join(' ')}`,
+      };
+    }
+
+    return {
+      isStaple: true,
+      matchedFoodCode: matched.foodCode,
+      passed: true,
+      reason: `Declared values conform to biological IFCT 2017 reference bounds for ${matched.stapleName} [${matched.foodCode}].`,
+    };
   }
 
   /**
