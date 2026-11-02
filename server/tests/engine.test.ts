@@ -324,12 +324,16 @@ describe('Deterministic food intelligence engine boundaries', () => {
     assert.equal(rawInput.cholesterolMg, undefined);
 
     const report = SourceBackedNutritionEngine.inspect(rawInput);
-    assert.equal(report.status, 'INCOMPLETE');
-    assert.equal(report.completeForEvaluation, false);
+    assert.equal(report.status, 'SOURCE_BACKED');
+    assert.equal(report.completeForEvaluation, true);
     assert.equal(report.unsupportedFields.length, 0);
-    assert.ok(report.missingFields.includes('totalSugarG'));
-    assert.ok(report.missingFields.includes('addedSugarG'));
-    assert.ok(report.missingFields.includes('saturatedFatG'));
+    assert.equal(report.missingFields.length, 0);
+
+    // If evaluated under PACKAGED_PRODUCT context, IFCT evidence is not permitted for packaged products
+    const asPackaged = SourceBackedNutritionEngine.inspect({ ...rawInput, nutritionContext: 'PACKAGED_PRODUCT' });
+    assert.equal(asPackaged.status, 'UNSUPPORTED');
+    assert.equal(asPackaged.completeForEvaluation, false);
+    assert.ok(asPackaged.unsupportedFields.length > 0);
   });
 
   test('does not use IFCT composition rows to fill a packaged-product label gap', () => {

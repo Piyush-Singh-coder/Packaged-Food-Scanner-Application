@@ -779,32 +779,12 @@ export class IngredientParser {
       fact: 'Refined starch hydrolysate; rapidly digested industrial carbohydrate.',
       processing: 'GROUP_C_ULTRA_PROCESSED',
     },
-    'liquid glucose': {
-      fact: 'Hydrolysed starch syrup containing fast-absorbing glucose and maltose.',
-      processing: 'GROUP_C_ULTRA_PROCESSED',
-    },
-    'corn syrup solids': {
-      fact: 'Dehydrated corn syrup; a refined, rapidly digested carbohydrate source.',
-      processing: 'GROUP_C_ULTRA_PROCESSED',
-    },
     'modified starch': {
       fact: 'Chemically altered starch used for thickening; ultra-processed texturizer.',
       processing: 'GROUP_C_ULTRA_PROCESSED',
     },
     'dextrin': {
       fact: 'Short-chain starch hydrolysate used as a refined carbohydrate.',
-      processing: 'GROUP_C_ULTRA_PROCESSED',
-    },
-    'glucose syrup': {
-      fact: 'Refined glucose syrup used as an industrial sweetener.',
-      processing: 'GROUP_C_ULTRA_PROCESSED',
-    },
-    'corn syrup': {
-      fact: 'Refined glucose-containing syrup.',
-      processing: 'GROUP_C_ULTRA_PROCESSED',
-    },
-    'rice syrup': {
-      fact: 'Refined syrup containing rice-derived sugars.',
       processing: 'GROUP_C_ULTRA_PROCESSED',
     },
     'refined flour': {
@@ -826,7 +806,7 @@ export class IngredientParser {
   };
 
   // ---------------------------------------------------------------------------
-  // 4. Added Sugars Dictionary
+  // 4. Added Sugars Dictionary (FSSAI Reg. 2(1)(z)(ii))
   // ---------------------------------------------------------------------------
   private static readonly ADDED_SUGAR_MARKERS: Record<string, { fact: string; processing: ProcessingClassification }> = {
     'sugar': {
@@ -841,16 +821,52 @@ export class IngredientParser {
       fact: 'Sucrose split into glucose and fructose; industrial confectionery sugar.',
       processing: 'GROUP_C_ULTRA_PROCESSED',
     },
+    'liquid glucose': {
+      fact: 'Hydrolysed starch syrup containing fast-absorbing glucose and maltose; FSSAI Reg. 2(1)(z)(ii) added sugar.',
+      processing: 'GROUP_C_ULTRA_PROCESSED',
+    },
+    'glucose syrup': {
+      fact: 'Refined glucose syrup used as an industrial sweetener; FSSAI Reg. 2(1)(z)(ii) added sugar.',
+      processing: 'GROUP_C_ULTRA_PROCESSED',
+    },
+    'corn syrup': {
+      fact: 'Refined glucose-containing syrup; FSSAI Reg. 2(1)(z)(ii) added sugar.',
+      processing: 'GROUP_C_ULTRA_PROCESSED',
+    },
+    'corn syrup solids': {
+      fact: 'Dehydrated corn syrup; FSSAI Reg. 2(1)(z)(ii) added sugar.',
+      processing: 'GROUP_C_ULTRA_PROCESSED',
+    },
     'high fructose corn syrup': {
       fact: 'Industrial sweetener high in unbound fructose.',
+      processing: 'GROUP_C_ULTRA_PROCESSED',
+    },
+    'rice syrup': {
+      fact: 'Refined syrup containing rice-derived sugars; FSSAI Reg. 2(1)(z)(ii) added sugar.',
+      processing: 'GROUP_C_ULTRA_PROCESSED',
+    },
+    'maltose': {
+      fact: 'Disaccharide sugar; FSSAI Reg. 2(1)(z)(ii) added sugar.',
       processing: 'GROUP_C_ULTRA_PROCESSED',
     },
     'dextrose': {
       fact: 'Simple D-glucose, rapidly absorbed into bloodstream.',
       processing: 'GROUP_C_ULTRA_PROCESSED',
     },
+    'khandsari': {
+      fact: 'Traditional raw crystallised sugar; FSSAI Reg. 2(1)(z)(ii) added sugar.',
+      processing: 'GROUP_B_CULINARY_INGREDIENT',
+    },
+    'bura': {
+      fact: 'Crushed raw unrefined sugar; FSSAI Reg. 2(1)(z)(ii) added sugar.',
+      processing: 'GROUP_B_CULINARY_INGREDIENT',
+    },
     'jaggery': {
       fact: 'Traditional unrefined cane sugar containing sucrose.',
+      processing: 'GROUP_B_CULINARY_INGREDIENT',
+    },
+    'gur': {
+      fact: 'Traditional unrefined cane sugar (jaggery).',
       processing: 'GROUP_B_CULINARY_INGREDIENT',
     },
     'honey': {
@@ -923,12 +939,45 @@ export class IngredientParser {
     },
   };
 
-  private static allergenTagsForToken(lower: string): string[] {
+  private static allergenTagsForToken(lower: string, freeFromClaims: string[] = []): string[] {
     if (this.isFreeFromClaim(lower)) return [];
 
     const tags: string[] = [];
-    if (/wheat|maida|atta|barley|rye|spelt|triticale/i.test(lower)) tags.push('ALLERGEN_GLUTEN');
-    if (/milk|dairy|whey|casein|butter|ghee|curd|paneer|cream|cheese|yoghurt|yogurt|milk\s*(?:solid|powder)/i.test(lower)) {
+
+    // FSSAI (Labelling and Display) Regulations, 2020, Reg. 5(14)(i):
+    // Mandatory gluten cereals: wheat, rye, barley, oats, spelt or their hybridized strains.
+    // Statutory exemptions under Reg. 5(14)(i)(a)-(c):
+    // - wheat based glucose syrups including dextrose
+    // - wheat based maltodextrins
+    // - glucose syrups based on barley
+    // - oats qualified by gluten-free claim
+    const isExemptGlutenDerivative =
+      /\bwheat[-\s]+based\s+(?:maltodextrins?|glucose\s+syrups?|dextrose)\b/i.test(lower) ||
+      /\bbarley[-\s]+based\s+glucose\s+syrups?\b/i.test(lower);
+
+    const isGlutenFreeOats =
+      (freeFromClaims.includes('GLUTEN_FREE') || this.isFreeFromClaim(lower)) &&
+      /\b(?:oats?|oat\s+flour|rolled\s+oats?)\b/i.test(lower);
+
+    if (
+      !isExemptGlutenDerivative &&
+      !isGlutenFreeOats &&
+      /\b(?:wheat|maida|atta|suji|sooji|rava|semolina|durum|dalia|bulgur|barley|malt|rye|oats?|oat\s+flour|rolled\s+oats?|spelt|triticale|gluten)\b/i.test(lower)
+    ) {
+      tags.push('ALLERGEN_GLUTEN');
+    }
+
+    // FSSAI Reg. 5(14)(iii): Milk & milk products.
+    // Exclude plant-derived butters (cocoa butter, peanut butter, shea butter, kokum butter, mango butter, almond/cashew butter, etc.)
+    const withoutPlantButters = lower.replace(
+      /\b(?:cocoa|peanut|groundnut|shea|kokum|mango|almond|cashew|hazelnut|soy|soya|sunflower|coconut)\s+butter\b/gi,
+      ' '
+    );
+    if (
+      /\b(?:milk|dairy|whey|casein|caseinate|butter|ghee|curd|dahi|paneer|chhena|khoya|mawa|malai|cream|cheese|yoghurt|yogurt|buttermilk|chach|lassi|lactalbumin|lactoglobulin|milk\s*(?:solids?|powder))\b/i.test(
+        withoutPlantButters
+      )
+    ) {
       tags.push('ALLERGEN_MILK');
     }
     if (/prawn|crab|shrimp|crustacean|langoustine/i.test(lower)) tags.push('ALLERGEN_CRUSTACEAN');
@@ -1212,12 +1261,12 @@ export class IngredientParser {
       ? ingredientsText.slice(0, mayContainMatch.index)
       : ingredientsText;
 
-    const freeFromClaims = this.freeFromClaimsIn(mainIngredientsText);
+    const freeFromClaims = this.freeFromClaimsIn(`${productName ?? ''} ${mainIngredientsText}`);
     const mayContainTags = new Set<string>();
     if (mayContainText) {
       for (const token of this.tokenize(mayContainText)) {
         const lower = token.toLowerCase();
-        this.allergenTagsForToken(lower).forEach((tag) => mayContainTags.add(tag));
+        this.allergenTagsForToken(lower, freeFromClaims).forEach((tag) => mayContainTags.add(tag));
         this.advisoryTagsForToken(lower).forEach((tag) => mayContainTags.add(tag));
       }
     }
@@ -1313,7 +1362,9 @@ export class IngredientParser {
             : undefined);
 
         if (info) {
-          const allergenTags = Array.from(new Set([...(info.allergenTags || []), ...this.allergenTagsForToken(lower)]));
+          const allergenTags = Array.from(
+            new Set([...(info.allergenTags || []), ...this.allergenTagsForToken(lower, freeFromClaims)])
+          );
           const statutoryWarnings: string[] = [];
           if (info.statutoryWarning) {
             statutoryWarnings.push(info.statutoryWarning);
@@ -1344,33 +1395,7 @@ export class IngredientParser {
         }
       }
 
-      // 2. Check High-Glycemic Carbohydrates
-      for (const [marker, conf] of Object.entries(this.HIGH_GI_CARB_MARKERS)) {
-        if (lower.includes(marker)) {
-          const allergenTags = this.allergenTagsForToken(lower);
-          decoded.push({
-            rawToken: token,
-            normalizedName: marker.toUpperCase(),
-            category: 'HIGH_GI_CARB',
-            functionalClass: 'NATURAL_BASE_INGREDIENT',
-            processingGroup: conf.processing,
-            declaredPercentage,
-            allergenTags,
-            advisoryTags: tokenAdvisoryTags,
-            allergenStatus: allergenTags.length > 0 ? 'CONTAINS' : 'NONE',
-            facts: conf.fact,
-            whyFlagged: 'Refined carbohydrate source; interpret alongside total carbohydrate, fibre, and portion size.',
-            isWarning: true,
-          });
-          allergenTags.forEach((tag) => allergenSet.add(tag));
-          tokenAdvisoryTags.forEach((tag) => advisorySet.add(tag));
-          matched = true;
-          break;
-        }
-      }
-      if (matched) continue;
-
-      // 3. Check Added Sugars
+      // 2. Check Added Sugars (FSSAI Reg. 2(1)(z)(ii) checked before High-GI Carbs so syrups are tagged ADDED_SUGAR)
       for (const [marker, conf] of Object.entries(this.ADDED_SUGAR_MARKERS)) {
         if (lower.includes(marker)) {
           decoded.push({
@@ -1394,10 +1419,36 @@ export class IngredientParser {
       }
       if (matched) continue;
 
+      // 3. Check High-Glycemic Carbohydrates
+      for (const [marker, conf] of Object.entries(this.HIGH_GI_CARB_MARKERS)) {
+        if (lower.includes(marker)) {
+          const allergenTags = this.allergenTagsForToken(lower, freeFromClaims);
+          decoded.push({
+            rawToken: token,
+            normalizedName: marker.toUpperCase(),
+            category: 'HIGH_GI_CARB',
+            functionalClass: 'NATURAL_BASE_INGREDIENT',
+            processingGroup: conf.processing,
+            declaredPercentage,
+            allergenTags,
+            advisoryTags: tokenAdvisoryTags,
+            allergenStatus: allergenTags.length > 0 ? 'CONTAINS' : 'NONE',
+            facts: conf.fact,
+            whyFlagged: 'Refined carbohydrate source; interpret alongside total carbohydrate, fibre, and portion size.',
+            isWarning: true,
+          });
+          allergenTags.forEach((tag) => allergenSet.add(tag));
+          tokenAdvisoryTags.forEach((tag) => advisorySet.add(tag));
+          matched = true;
+          break;
+        }
+      }
+      if (matched) continue;
+
       // 4. Check Fats & Oils
       for (const [marker, val] of Object.entries(this.FAT_OIL_MARKERS)) {
         if (lower.includes(marker)) {
-          const allergenTags = lower.includes('butter') || lower.includes('ghee') ? ['ALLERGEN_MILK'] : [];
+          const allergenTags = this.allergenTagsForToken(lower, freeFromClaims);
           decoded.push({
             rawToken: token,
             normalizedName: marker.toUpperCase(),
@@ -1412,7 +1463,7 @@ export class IngredientParser {
             whyFlagged: val.warning,
             isWarning: !!val.warning,
           });
-          if (lower.includes('butter') || lower.includes('ghee')) allergenSet.add('ALLERGEN_MILK');
+          allergenTags.forEach((tag) => allergenSet.add(tag));
           tokenAdvisoryTags.forEach((tag) => advisorySet.add(tag));
           matched = true;
           break;
@@ -1450,7 +1501,7 @@ export class IngredientParser {
       }
 
       // 5. Check Allergens, Base Grains, Whole Foods & Staples
-      const allergenTags = this.allergenTagsForToken(lower);
+      const allergenTags = this.allergenTagsForToken(lower, freeFromClaims);
       const allergenMatch = allergenTags[0]
         ? { tag: allergenTags[0], facts: 'Ingredient associated with a registered allergen category.' }
         : undefined;
@@ -1472,8 +1523,9 @@ export class IngredientParser {
         allergenTags.forEach((tag) => allergenSet.add(tag));
         tokenAdvisoryTags.forEach((tag) => advisorySet.add(tag));
         matched = true;
-      } else if (lower.includes('wheat') || lower.includes('maida') || lower.includes('atta') || lower.includes('barley')) {
-        const isWhole = !lower.includes('maida') && !lower.includes('refined');
+      } else if (/\b(?:wheat|maida|atta|suji|sooji|rava|semolina|durum|dalia|bulgur|barley|malt|rye|spelt|triticale)\b/i.test(lower)) {
+        const isWhole = !lower.includes('maida') && !lower.includes('refined') && !lower.includes('suji') && !lower.includes('sooji') && !lower.includes('rava') && !lower.includes('semolina');
+        const allergenTags = this.allergenTagsForToken(lower, freeFromClaims);
         decoded.push({
           rawToken: token,
           normalizedName: cleanToken,
@@ -1481,11 +1533,11 @@ export class IngredientParser {
           functionalClass: 'NATURAL_BASE_INGREDIENT',
           processingGroup: isWhole ? 'GROUP_A_MINIMALLY_PROCESSED' : 'GROUP_B_CULINARY_INGREDIENT',
           declaredPercentage,
-          allergenTags: ['ALLERGEN_GLUTEN'],
+          allergenTags,
           facts: 'Cereal grain containing gluten protein.',
           isWarning: false,
         });
-        allergenSet.add('ALLERGEN_GLUTEN');
+        allergenTags.forEach((t) => allergenSet.add(t));
         matched = true;
       } else if (lower.includes('milk') || lower.includes('whey') || lower.includes('casein')) {
         decoded.push({
@@ -1624,6 +1676,8 @@ export class IngredientParser {
         allergenSet.add('ALLERGEN_GLUTEN');
         matched = true;
       } else if (lower.includes('oat')) {
+        const isGlutenFreeOats = freeFromClaims.includes('GLUTEN_FREE') || this.isFreeFromClaim(lower);
+        const allergenTags = isGlutenFreeOats ? [] : this.allergenTagsForToken(lower);
         decoded.push({
           rawToken: token,
           normalizedName: cleanToken,
@@ -1631,10 +1685,13 @@ export class IngredientParser {
           functionalClass: 'NATURAL_BASE_INGREDIENT',
           processingGroup: 'GROUP_A_MINIMALLY_PROCESSED',
           declaredPercentage,
-          allergenTags: [],
-          facts: 'Whole-grain oat cereal; fibre content varies by product and must come from the nutrition panel.',
+          allergenTags,
+          facts: isGlutenFreeOats
+            ? 'Gluten-free oats; certified under FSSAI gluten-free standard (<20 ppm gluten).'
+            : 'Whole-grain oat cereal; mandatory gluten declaration under FSSAI Reg. 5(14)(i) unless certified gluten-free.',
           isWarning: false,
         });
+        allergenTags.forEach((t) => allergenSet.add(t));
         matched = true;
       } else if (lower.includes('moth bean') || lower.includes('moth flour') || lower.includes('gram flour') || lower.includes('besan') || lower.includes('chana')) {
         decoded.push({

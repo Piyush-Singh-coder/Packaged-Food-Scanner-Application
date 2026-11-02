@@ -2,9 +2,9 @@ import type { FastifyInstance } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
 
 /**
- * Process-local safety limit for the API. A shared Redis store should be wired
- * for multi-instance deployments; the local limiter still protects a single
- * instance and test/dev environments from accidental request floods.
+ * Process-local safety limit for the API.
+ * Uses client IP as the primary rate-limit boundary so unauthenticated callers
+ * cannot bypass rate limits by rotating the X-Device-Id header.
  */
 export async function setupRateLimit(fastify: FastifyInstance): Promise<void> {
   await fastify.register(rateLimit, {
@@ -12,14 +12,8 @@ export async function setupRateLimit(fastify: FastifyInstance): Promise<void> {
     max: 120,
     timeWindow: '1 minute',
     keyGenerator: (request) => {
-      const headerDeviceId = request.headers['x-device-id'];
-      const deviceId = typeof headerDeviceId === 'string'
-        ? headerDeviceId.trim()
-        : Array.isArray(headerDeviceId)
-          ? headerDeviceId[0]?.trim()
-          : undefined;
       const userId = (request.user as any)?.id;
-      return deviceId || userId || request.ip;
+      return userId ? `${request.ip}:${userId}` : request.ip;
     },
     errorResponseBuilder: (_request, context) => ({
       statusCode: 429,

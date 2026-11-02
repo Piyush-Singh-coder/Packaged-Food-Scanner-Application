@@ -18,8 +18,13 @@ export const swapParamsSchema = z.object({
 
 export const swapQuerySchema = z.object({
   persona: z
-    .enum(['ADULT', 'DIABETIC', 'INFANT', 'CHILD', 'CARDIAC', 'RENAL'])
-    .default('ADULT'),
+    .enum(['ADULT', 'DIABETIC', 'INFANT', 'INFANT_UNDER_2', 'CHILD', 'CHILD_OVER_2', 'CARDIAC', 'RENAL'])
+    .default('ADULT')
+    .transform((val): 'ADULT' | 'DIABETIC' | 'INFANT' | 'CHILD' | 'CARDIAC' | 'RENAL' => {
+      if (val === 'INFANT_UNDER_2') return 'INFANT';
+      if (val === 'CHILD_OVER_2') return 'CHILD';
+      return val;
+    }),
   allergens: z
     .string()
     .optional()
@@ -30,10 +35,6 @@ export const swapQuerySchema = z.object({
         .map((a) => a.trim().toUpperCase())
         .filter(Boolean);
     }),
-  // Product policy is a price-premium ceiling relative to the scanned item's
-  // price per 100g. Cheaper alternatives are always allowed; a caller may
-  // tighten but never widen the premium ceiling. There is deliberately no 0.8
-  // lower boundary here: that would be a price floor, not a ceiling.
   maxPriceRatio: z.coerce.number().gt(0).max(1.2).default(1.2),
   limit: z.coerce.number().int().min(1).max(10).default(3),
   allowCrossCategory: z

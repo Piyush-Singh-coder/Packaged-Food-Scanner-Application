@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, or } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, or } from 'drizzle-orm';
 import { db, isDatabaseAvailable } from '../../db/index.js';
 import { products, type Product } from '../../db/schema/products.js';
 import { normalizeBarcode } from '../../common/utils/barcode.js';
@@ -168,6 +168,7 @@ export class ProductsService {
       try {
         dbProduct = await db.query.products.findFirst({
           where: eq(products.barcodeGtin, gtin),
+          orderBy: [desc(products.formulationVersion)],
         });
       } catch (err) {
         if (env.NODE_ENV === 'production') throw err;
@@ -386,7 +387,12 @@ export class ProductsService {
 
     if (await isDatabaseAvailable()) {
       try {
-        const rows = await db.select().from(products).limit(500);
+        const rows = await db
+          .select()
+          .from(products)
+          .where(eq(products.isVerified, true))
+          .orderBy(desc(products.formulationVersion))
+          .limit(500);
         for (const row of rows) {
           results.set(row.barcodeGtin, this.dbToStoredProduct(row));
         }

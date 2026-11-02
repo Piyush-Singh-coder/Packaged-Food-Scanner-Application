@@ -447,24 +447,25 @@ describe('Advanced Product Intelligence Features', () => {
     });
   });
 
-  describe('6. Device-Aware Rate Limiting Key Isolation', () => {
-    test('extracts x-device-id over IP to prevent carrier-NAT collision', () => {
-      // Mock request object representing a mobile device behind CGNAT
-      const reqWithDevice = {
-        headers: { 'x-device-id': 'dev_ios_987654321' },
-        ip: '103.21.124.5', // Carrier-Grade NAT public IP (e.g. Jio / Airtel)
-      };
-      const headerDeviceId = reqWithDevice.headers['x-device-id'];
-      const deviceId = typeof headerDeviceId === 'string' ? headerDeviceId.trim() : undefined;
-      const key = deviceId || reqWithDevice.ip;
-      assert.strictEqual(key, 'dev_ios_987654321');
-
-      const reqWithoutDevice = {
-        headers: {},
+  describe('6. IP-Bound Rate Limiting Key Isolation (Anti-Spoofing)', () => {
+    test('uses request.ip for anonymous requests to prevent x-device-id spoofing', () => {
+      const anonymousReq = {
+        headers: { 'x-device-id': 'spoofed-random-id' },
         ip: '103.21.124.5',
+        user: undefined,
       };
-      const keyFallback = (reqWithoutDevice.headers as any)['x-device-id'] || reqWithoutDevice.ip;
-      assert.strictEqual(keyFallback, '103.21.124.5');
+      const userId = (anonymousReq.user as any)?.id;
+      const key = userId ? `${anonymousReq.ip}:${userId}` : anonymousReq.ip;
+      assert.strictEqual(key, '103.21.124.5');
+
+      const authenticatedReq = {
+        headers: { 'x-device-id': 'dev_123' },
+        ip: '103.21.124.5',
+        user: { id: 'usr_789' },
+      };
+      const authUserId = (authenticatedReq.user as any)?.id;
+      const authKey = authUserId ? `${authenticatedReq.ip}:${authUserId}` : authenticatedReq.ip;
+      assert.strictEqual(authKey, '103.21.124.5:usr_789');
     });
   });
 

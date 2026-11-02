@@ -358,6 +358,9 @@ export class EvaluationService {
     const containsPotassiumChloride = ingredientsAnalysis.decoded.some(
       (item) => item.insCode?.toLowerCase() === '508'
     );
+    const containsMsg = ingredientsAnalysis.decoded.some(
+      (item) => item.insCode?.toLowerCase() === '621' || /monosodium\s+glutamate|\bmsg\b/i.test(item.rawToken)
+    );
 
     // Adult: a transparent population-level screen, not a clinical verdict.
     if (!isGraded) {
@@ -442,6 +445,15 @@ export class EvaluationService {
           ? `One serving contains ${serving.addedSugarG}g added sugar (${per100.addedSugarG}g/100g). ICMR-NIN DGI 2024 advises no added sugar for children under 2 years.`
           : `The label declares ${per100.addedSugarG}g added sugar per 100g and no serving size. ICMR-NIN DGI 2024 advises no added sugar for children under 2 years.`,
         citation: infantRules.citation.guidelineName,
+      });
+    } else if (containsMsg) {
+      familyVerdicts.push({
+        personaId: 'INFANT_UNDER_2',
+        personaName: 'Infant / Toddler (Under 2 Years)',
+        status: 'RED_LIMIT_AVOID',
+        headline: 'Contains Monosodium Glutamate (INS 621)',
+        reason: 'FSSAI (Labelling and Display) Regulations 2020, Schedule II mandates the warning: NOT RECOMMENDED FOR INFANTS BELOW 12 MONTHS AND PREGNANT WOMEN.',
+        citation: 'FSSAI (Labelling and Display) Regulations, 2020, Schedule II',
       });
     } else if (hasAddedSugarMarker) {
       familyVerdicts.push({

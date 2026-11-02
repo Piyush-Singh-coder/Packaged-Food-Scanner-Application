@@ -64,9 +64,10 @@ export class SwapsService {
     const norm = scannedEval.normalizedNutrition.per100g;
 
     const scannedWeight = scanned.packageWeightG > 0 ? scanned.packageWeightG : null;
-    const scannedPricePer100g = scannedWeight !== null && scanned.mrpInr > 0
-      ? Math.round(((scanned.mrpInr / scannedWeight) * 100) * 100) / 100
-      : 0;
+    const scannedPricePer100g =
+      scannedWeight !== null && scanned.mrpInr > 0
+        ? Math.round((scanned.mrpInr / scannedWeight) * 100 * 100) / 100
+        : 0;
 
     if (!scanned.isVerified || !scannedEval.isGraded) {
       return SwapsService.emptyResponse(
@@ -84,11 +85,13 @@ export class SwapsService {
       );
     }
 
-    if (norm.addedSugarG === null
-      || norm.sodiumMg === null
-      || norm.saturatedFatG === null
-      || norm.energyKcal === null
-      || norm.fiberG === null) {
+    if (
+      norm.addedSugarG === null ||
+      norm.sodiumMg === null ||
+      norm.saturatedFatG === null ||
+      norm.energyKcal === null ||
+      norm.fiberG === null
+    ) {
       return SwapsService.emptyResponse(
         scanned,
         query.persona,
@@ -123,16 +126,19 @@ export class SwapsService {
       const itemCatSlug = SwapsService.categorySlug(item.category);
       const scannedCatLower = scanned.categorySlug.toLowerCase();
       const isSameCategory =
-        itemCatSlug === scannedCatLower
-        || item.category.toLowerCase() === scannedCatLower
-        || (query.allowCrossCategory && item.form === scanned.form);
+        itemCatSlug === scannedCatLower ||
+        item.category.toLowerCase() === scannedCatLower ||
+        (query.allowCrossCategory && item.form === scanned.form);
+
       if (!isSameCategory) continue;
 
       if (!item.packageWeightGrams || item.packageWeightGrams <= 0 || item.mrpInr <= 0) continue;
-      const itemPricePer100g = Math.round(((item.mrpInr / item.packageWeightGrams) * 100) * 100) / 100;
+      const itemPricePer100g =
+        Math.round((item.mrpInr / item.packageWeightGrams) * 100 * 100) / 100;
       const priceRatio = itemPricePer100g / scannedPricePer100g;
+
       // Cheaper alternatives are always allowed; only a price premium beyond the
-      // caller's ceiling is rejected. There is no artificial lower price floor.
+      // caller's ceiling is rejected.
       if (priceRatio > query.maxPriceRatio) continue;
 
       const candidateEval = EvaluationService.evaluate(item);
@@ -149,18 +155,20 @@ export class SwapsService {
       const candidateFiber = candidateNutrition.fiberG;
       const candidateTransFat = candidateNutrition.transFatG;
 
-      if (candidateEnergy === null
-        || candidateProtein === null
-        || candidateCarbs === null
-        || candidateAddedSugar === null
-        || candidateTotalSugar === null
-        || candidateSatFat === null
-        || candidateSodium === null
-        || candidateFiber === null) {
+      if (
+        candidateEnergy === null ||
+        candidateProtein === null ||
+        candidateCarbs === null ||
+        candidateAddedSugar === null ||
+        candidateTotalSugar === null ||
+        candidateSatFat === null ||
+        candidateSodium === null ||
+        candidateFiber === null
+      ) {
         continue;
       }
 
-      const parsed = IngredientParser.parse(item.ingredientsText);
+      const parsed = IngredientParser.parse(item.ingredientsText, item.productName);
 
       if (query.allergens && query.allergens.length > 0) {
         const candidateAllergens = new Set([
@@ -170,8 +178,14 @@ export class SwapsService {
         if (query.allergens.some((allergen) => candidateAllergens.has(allergen))) continue;
       }
 
-      if (query.persona === 'INFANT' && candidateAddedSugar > 0) continue;
+      // Infant under 2 years: strict zero added sugar, zero added sugar markers, and no MSG (INS 621)
+      if (query.persona === 'INFANT') {
+        const hasAddedSugarIngredient = parsed.decoded.some((d) => d.category === 'ADDED_SUGAR');
+        const hasMsg = parsed.decoded.some((d) => d.insCode === '621');
+        if (candidateAddedSugar > 0 || hasAddedSugarIngredient || hasMsg) continue;
+      }
 
+      // Child 2+: reject products with non-nutritive sweeteners (FSSAI Schedule II mandatory warning)
       if (query.persona === 'CHILD') {
         const hasArtificialSweeteners = parsed.decoded.some(
           (decoded) => decoded.insCode && ARTIFICIAL_SWEETENERS[decoded.insCode]
@@ -179,7 +193,10 @@ export class SwapsService {
         if (hasArtificialSweeteners) continue;
       }
 
-      if (query.persona === 'RENAL' && parsed.decoded.some((decoded) => decoded.insCode?.toLowerCase() === '508')) {
+      if (
+        query.persona === 'RENAL' &&
+        parsed.decoded.some((decoded) => decoded.insCode?.toLowerCase() === '508')
+      ) {
         continue;
       }
 
@@ -197,7 +214,6 @@ export class SwapsService {
         addedSugar100g: candidateAddedSugar,
         totalSugar100g: candidateTotalSugar,
         saturatedFat100g: candidateSatFat,
-        // Ranking sentinel only. It is never printed as a nutrient value.
         transFat100g: candidateTransFat ?? Number.POSITIVE_INFINITY,
         sodiumMg100g: candidateSodium,
         dietaryFiber100g: candidateFiber,
@@ -211,27 +227,48 @@ export class SwapsService {
     }
 
     const qualifyingHealthier = evaluatedCandidates.filter((candidate) => {
+      // Non-regression guard: a swap candidate must never have MORE ICMR Table 15.1 HFSS breaches
+      if (candidate.hfssBreachCount > scannedHfssBreaches) return false;
+
+      // Persona-specific non-regression guards:
+      // - DIABETIC must never be recommended a swap with higher added sugar
+      // - CARDIAC / RENAL must never be recommended a swap with higher sodium or higher saturated fat
+      // - CHILD / INFANT must never be recommended a swap with higher added sugar
+      if (
+        (query.persona === 'DIABETIC' || query.persona === 'CHILD' || query.persona === 'INFANT') &&
+        candidate.addedSugar100g > scannedAddedSugar
+      ) {
+        return false;
+      }
+      if (
+        (query.persona === 'CARDIAC' || query.persona === 'RENAL') &&
+        (candidate.sodiumMg100g > scannedSodium || candidate.saturatedFat100g > scannedSatFat)
+      ) {
+        return false;
+      }
+
       if (scannedHfssBreaches === 0 && scannedAddedSugar === 0) {
-        return candidate.hfssBreachCount === 0
-          && candidate.addedSugar100g === 0
-          && (candidate.sodiumMg100g < scannedSodium || candidate.dietaryFiber100g > scannedFiber);
+        return (
+          candidate.hfssBreachCount === 0 &&
+          candidate.addedSugar100g === 0 &&
+          (candidate.sodiumMg100g < scannedSodium || candidate.dietaryFiber100g > scannedFiber)
+        );
       }
 
       const hasFewerBreaches = candidate.hfssBreachCount < scannedHfssBreaches;
-      const hasLowerSugar = candidate.addedSugar100g <= scannedAddedSugar * 0.8;
-      const hasLowerSodium = candidate.sodiumMg100g <= scannedSodium * 0.8;
-      const hasLowerFat = candidate.saturatedFat100g <= scannedSatFat * 0.8;
-      // A fibre advantage is only meaningful here when it is material (at least
-      // 20% and 1 g/100 g more) and does not come with more added sugar.
-      const hasMoreFiber = candidate.dietaryFiber100g >= scannedFiber * 1.2
-        && candidate.dietaryFiber100g - scannedFiber >= 1
-        && candidate.addedSugar100g <= scannedAddedSugar;
+      const hasLowerSugar = candidate.addedSugar100g <= scannedAddedSugar * 0.8 && scannedAddedSugar > 0;
+      const hasLowerSodium = candidate.sodiumMg100g <= scannedSodium * 0.8 && scannedSodium > 0;
+      const hasLowerFat = candidate.saturatedFat100g <= scannedSatFat * 0.8 && scannedSatFat > 0;
+      const hasMoreFiber =
+        candidate.dietaryFiber100g >= scannedFiber * 1.2 &&
+        candidate.dietaryFiber100g - scannedFiber >= 1 &&
+        candidate.addedSugar100g <= scannedAddedSugar;
+
       return hasFewerBreaches || hasLowerSugar || hasLowerSodium || hasLowerFat || hasMoreFiber;
     });
 
-    const isAlreadyOptimal = scannedHfssBreaches === 0
-      && scannedAddedSugar === 0
-      && qualifyingHealthier.length === 0;
+    const isAlreadyOptimal =
+      scannedHfssBreaches === 0 && scannedAddedSugar === 0 && qualifyingHealthier.length === 0;
 
     if (isAlreadyOptimal) {
       return {
@@ -261,7 +298,8 @@ export class SwapsService {
     const topCandidates = rankedCandidates.slice(0, query.limit);
 
     const swaps: SwapItem[] = topCandidates.map((candidate) => {
-      const priceRatioVsScanned = Math.round((candidate.pricePer100g / scannedPricePer100g) * 100) / 100;
+      const priceRatioVsScanned =
+        Math.round((candidate.pricePer100g / scannedPricePer100g) * 100) / 100;
 
       const deltaSugar = calculateDelta('Added Sugar', scannedAddedSugar, candidate.addedSugar100g, 'g', true);
       const deltaSodium = calculateDelta('Sodium', scannedSodium, candidate.sodiumMg100g, 'mg', true);
@@ -271,6 +309,7 @@ export class SwapsService {
       const deltaPrice = calculateDelta('Price per 100g', scannedPricePer100g, candidate.pricePer100g, '₹', true);
 
       const keyAdvantages: string[] = [];
+
       if (deltaSugar.isImprovement && deltaSugar.percentDelta <= -20) {
         keyAdvantages.push(`${Math.abs(deltaSugar.percentDelta)}% less added sugar (${deltaSugar.absoluteDelta}g/100g)`);
       } else if (candidate.addedSugar100g === 0 && scannedAddedSugar > 0) {
@@ -311,15 +350,12 @@ export class SwapsService {
           `Still breaches ${candidate.hfssBreachCount} DGI Table 15.1 threshold(s) (e.g. added sugar/energy/salt). It is a relative improvement, not an unrestricted health food.`
         );
       }
-
       if (!deltaSodium.isImprovement && deltaSodium.absoluteDelta > 50) {
         tradeOffs.push(`Higher sodium: ${candidate.sodiumMg100g}mg vs ${scannedSodium}mg (+${deltaSodium.absoluteDelta}mg/100g)`);
       }
-
       if (!deltaSatFat.isImprovement && deltaSatFat.absoluteDelta > 1.0) {
         tradeOffs.push(`Higher saturated fat: ${candidate.saturatedFat100g}g vs ${scannedSatFat}g (+${deltaSatFat.absoluteDelta}g/100g)`);
       }
-
       if (priceRatioVsScanned > 1.05) {
         const premiumPct = Math.round((priceRatioVsScanned - 1.0) * 100);
         tradeOffs.push(`+${premiumPct}% price premium (₹${candidate.pricePer100g.toFixed(2)} vs ₹${scannedPricePer100g.toFixed(2)}/100g)`);
@@ -357,9 +393,10 @@ export class SwapsService {
 
     let noSwapsReason: string | undefined;
     if (swaps.length === 0) {
-      noSwapsReason = query.allergens && query.allergens.length > 0
-        ? `No source-verified healthier alternative in this category within the price-premium ceiling is free from: ${query.allergens.join(', ')}.`
-        : 'No source-verified healthier alternative in this category met the price-premium ceiling and completeness rules.';
+      noSwapsReason =
+        query.allergens && query.allergens.length > 0
+          ? `No source-verified healthier alternative in this category within the price-premium ceiling is free from: ${query.allergens.join(', ')}.`
+          : 'No source-verified healthier alternative in this category met the price-premium ceiling and completeness rules.';
     }
 
     return {

@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean, numeric, integer, uniqueIndex, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, boolean, numeric, integer, uniqueIndex, index, jsonb } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import type { NutritionEvidenceMap } from '../../modules/engine/types.js';
 
@@ -51,6 +51,11 @@ export const products = pgTable('products', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   barcodeFormulationIdx: uniqueIndex('barcode_formulation_idx').on(table.barcodeGtin, table.formulationVersion),
+  swapLookupIdx: index('products_swap_lookup_idx').on(
+    table.isVerified,
+    table.nutritionBasis,
+    table.categorySlug
+  ),
 }));
 
 export type Product = typeof products.$inferSelect;
