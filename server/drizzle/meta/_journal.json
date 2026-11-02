@@ -1,0 +1,41 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1792502243254,
+      "tag": "0000_kind_dust",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1792502321136,
+      "tag": "0001_colorful_wild_child",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1792507837386,
+      "tag": "0002_flowery_namorita",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1792512345678,
+      "tag": "0003_add_username_and_password_resets",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1793028839382,
+      "tag": "0004_product_evidence_basis",
+      "breakpoints": true
+    }
+  ]
+}

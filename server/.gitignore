@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Production Build Output
+dist/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+*.env
+*.local
+
+# Logs
+logs/
+*.log
+
+# Tooling Outputs & Caches
+graphify-out/
+.turbo/
+.cache/
+coverage/
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
