@@ -84,9 +84,14 @@ function hasNumericValue(input: RawNutritionInput, field: NutritionField): boole
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
 
+const ARTIFACT_HASH_REGEX = /^(?:sha256:)?[a-f0-9]{32,64}$/i;
+
 function isProductLabelSource(evidence: NutritionEvidence): boolean {
   if (evidence.kind !== 'MANUFACTURER_LABEL') return false;
   if (evidence.verificationStatus !== 'VERIFIED') return false;
+  if (evidence.artifactHash !== undefined && !ARTIFACT_HASH_REGEX.test(evidence.artifactHash)) {
+    return false;
+  }
   const hasReviewedArtefact = Boolean(evidence.artifactHash || evidence.sourceUrl || evidence.capturedAt);
   if (!hasReviewedArtefact) return false;
   return /^(PACK_PHOTO|MANUFACTURER_LABEL|LAB_TEST|OCR_CAPTURE):/.test(evidence.sourceId);

@@ -20,6 +20,7 @@ const BEVERAGE_PATTERN = /\b(?:beverage|drink|juice|water|soda|cola|soft\s*drink
 const DAIRY_BEVERAGE_PATTERN = /\b(?:milk|milkshake|dairy\s*drink|smoothie)\b/i;
 const CONDIMENT_PATTERN = /\b(?:sauce|ketchup|condiment|chutney|dressing|mayonnaise|jam|jelly|pickle|preserve)\b/i;
 const OIL_FAT_PATTERN = /\b(?:oil|ghee|butter|vanaspati|margarine|fat\s*spread)\b/i;
+const FAT_MATERIAL_CATEGORIES = /\b(?:biscuit|cookie|cracker|rusk|namkeen|bhujia|instant\s*noodle|noodle|pasta|snack|chip|crisp|wafer|bakery|cake|pastry|muffin|doughnut|donut|confectionery|chocolate|fried|sev)\b/i;
 
 function classifyProduct(raw: RawNutritionInput): ProductClass {
   if (BEVERAGE_PATTERN.test(raw.category)) return 'BEVERAGE';
@@ -65,7 +66,10 @@ export class EvaluationService {
    * - beverages use liquid thresholds; ketchup/sauces use the declared per-100
    *   g basis rather than being misclassified as soft drinks.
    */
-  public static evaluate(rawInput: RawNutritionInput): CompleteEvaluationOutput {
+  public static evaluate(
+    rawInput: RawNutritionInput,
+    frontOfPackText: string = rawInput.frontOfPackText || ''
+  ): CompleteEvaluationOutput {
     const normalized = NutrientVerifier.normalize(rawInput);
     const consistencyAudit = NutrientVerifier.auditConsistency(normalized, {
       productName: rawInput.productName,
@@ -176,7 +180,7 @@ export class EvaluationService {
       },
     ];
 
-    const claimsAudit = ClaimsVerifier.verifyClaims(rawInput, normalized);
+    const claimsAudit = ClaimsVerifier.verifyClaims(rawInput, normalized, frontOfPackText);
     const claimStrings = claimsAudit.assessedClaims.map((c) => c.claim);
     const ingredientsAnalysis = IngredientParser.parse(
       rawInput.ingredientsText,
@@ -244,11 +248,26 @@ export class EvaluationService {
         const breached = table151HfssChecks.find((item) => item.isBreached === true);
         if (breached) whySummary.push(`Exceeds the DGI 2024 Table 15.1 reference for ${breached.nutrient}.`);
       } else {
-        frequencyGrade = 'SUITABLE_FOR_REGULAR_USE';
-        badgeLabel = '🟢 NO ASSESSED DGI THRESHOLD EXCEEDED';
-        whySummary.push(
-          'No assessed DGI Table 15.1 threshold was exceeded for energy, added sugar, salt, saturated fat (% energy), or added fat when declared.'
+        const isFatMaterial = classification === 'SOLID_FOOD' && (
+          FAT_MATERIAL_CATEGORIES.test(rawInput.category || '') ||
+          FAT_MATERIAL_CATEGORIES.test(rawInput.productName || '')
         );
+        const totalFat = per100.totalFatG ?? 0;
+        const isAddedFatMissing = per100.addedFatG === null;
+
+        if (isFatMaterial && isAddedFatMissing && totalFat > 15.0) {
+          frequencyGrade = 'ENJOY_IN_MODERATION';
+          badgeLabel = '🟡 PARTIAL ASSESSMENT — ADDED FAT NOT DECLARED';
+          whySummary.push(
+            `Total fat is high (${totalFat}g/100g) but added fat is not separately declared. Under ICMR-NIN guidelines, products in this category typically contain high added fat. Rating capped at moderate pending complete fat declaration.`
+          );
+        } else {
+          frequencyGrade = 'SUITABLE_FOR_REGULAR_USE';
+          badgeLabel = '🟢 NO ASSESSED DGI THRESHOLD EXCEEDED';
+          whySummary.push(
+            'No assessed DGI Table 15.1 threshold was exceeded for energy, added sugar, salt, saturated fat (% energy), or added fat when declared.'
+          );
+        }
       }
     } else {
       const missing = sourceIntegrity.missingFields.length > 0

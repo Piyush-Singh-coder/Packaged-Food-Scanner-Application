@@ -46,6 +46,7 @@ export const products = pgTable('products', {
   dataProvenance: varchar('data_provenance', { length: 50 }).notNull(), // 'VERIFIED_PACK' | 'FOSCOS_GOV' | 'USER_CONTRIBUTED'
   nutritionEvidence: jsonb('nutrition_evidence').$type<NutritionEvidenceMap>().notNull().default({}),
   isVerified: boolean('is_verified').default(false).notNull(),
+  lifecycleStatus: varchar('lifecycle_status', { length: 30 }).default('VERIFIED').notNull(), // 'DRAFT' | 'IN_REVIEW' | 'VERIFIED' | 'SUPERSEDED' | 'RETIRED'
 
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

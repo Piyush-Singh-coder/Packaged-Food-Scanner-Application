@@ -34,7 +34,7 @@ const OCR_REQUIRED_FIELDS: NutritionField[] = [
 
 export class OcrService {
   // In-memory submission store for offline and test environments
-  private static memorySubmissions = new Map<string, any>();
+  public static memorySubmissions = new Map<string, any>();
 
   private static buildRawNutritionInput(extracted: ReturnType<typeof OcrParser.parse>): RawNutritionInput {
     // Defensive guard: if the parser did not establish a basis, no per-100

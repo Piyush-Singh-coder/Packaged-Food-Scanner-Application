@@ -194,6 +194,7 @@ export interface RawNutritionInput {
   fiberG?: number;
   polyolsG?: number;
   ingredientsText?: string;
+  frontOfPackText?: string;
   insAdditives?: string[];
   /** Field-level evidence. Missing evidence means the value is unverified. */
   nutritionEvidence?: NutritionEvidenceMap;

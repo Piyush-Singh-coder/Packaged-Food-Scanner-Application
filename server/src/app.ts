@@ -11,6 +11,7 @@ import { healthRoutes } from './modules/health/health.routes.js';
 import { productsRoutes } from './modules/products/products.routes.js';
 import { swapsRoutes } from './modules/swaps/swaps.routes.js';
 import { ocrRoutes } from './modules/ocr/ocr.routes.js';
+import { adminRoutes } from './modules/admin/admin.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -46,6 +47,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(productsRoutes, { prefix: '/api/v1/products' });
   await app.register(swapsRoutes, { prefix: '/api/v1/swaps' });
   await app.register(ocrRoutes, { prefix: '/api/v1/ocr' });
+  await app.register(adminRoutes, { prefix: '/api/v1/admin' });
 
   return app;
 }

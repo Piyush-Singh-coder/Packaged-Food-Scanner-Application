@@ -89,13 +89,12 @@ export class SwapsService {
       norm.addedSugarG === null ||
       norm.sodiumMg === null ||
       norm.saturatedFatG === null ||
-      norm.energyKcal === null ||
-      norm.fiberG === null
+      norm.energyKcal === null
     ) {
       return SwapsService.emptyResponse(
         scanned,
         query.persona,
-        'The scanned product is missing a comparison field (added sugar, sodium, saturated fat, energy, or fibre). Missing is not treated as zero.',
+        'The scanned product is missing a comparison field (added sugar, sodium, saturated fat, or energy). Missing is not treated as zero.',
         {
           pricePer100g: scannedPricePer100g,
           hfssBreachCount: scannedEval.table151HfssChecks.filter((item) => item.isBreached === true).length,
@@ -162,8 +161,7 @@ export class SwapsService {
         candidateAddedSugar === null ||
         candidateTotalSugar === null ||
         candidateSatFat === null ||
-        candidateSodium === null ||
-        candidateFiber === null
+        candidateSodium === null
       ) {
         continue;
       }
@@ -178,11 +176,15 @@ export class SwapsService {
         if (query.allergens.some((allergen) => candidateAllergens.has(allergen))) continue;
       }
 
-      // Infant under 2 years: strict zero added sugar, zero added sugar markers, and no MSG (INS 621)
+      // Infant under 2 years: strict zero added sugar, zero added sugar markers, no MSG (INS 621),
+      // and exclude ultra-processed adult snack / confectionery categories unsuitable for infant complementary feeding
       if (query.persona === 'INFANT') {
         const hasAddedSugarIngredient = parsed.decoded.some((d) => d.category === 'ADDED_SUGAR');
         const hasMsg = parsed.decoded.some((d) => d.insCode === '621');
         if (candidateAddedSugar > 0 || hasAddedSugarIngredient || hasMsg) continue;
+
+        const isInfantUnsafeCategory = /^(?:confectionery|candy|chocolate|namkeen|instant-noodle|noodle|energy-drink|carbonated-beverage|soft-drink|chips|crisps|fried-snack)/i.test(itemCatSlug);
+        if (isInfantUnsafeCategory) continue;
       }
 
       // Child 2+: reject products with non-nutritive sweeteners (FSSAI Schedule II mandatory warning)
@@ -216,7 +218,7 @@ export class SwapsService {
         saturatedFat100g: candidateSatFat,
         transFat100g: candidateTransFat ?? Number.POSITIVE_INFINITY,
         sodiumMg100g: candidateSodium,
-        dietaryFiber100g: candidateFiber,
+        dietaryFiber100g: candidateFiber ?? 0,
         hfssBreachCount: candidateEval.table151HfssChecks.filter((check) => check.isBreached === true).length,
         allergenTags: parsed.statutoryAllergenTags,
         highGiCarbTags: parsed.decoded
@@ -251,7 +253,7 @@ export class SwapsService {
         return (
           candidate.hfssBreachCount === 0 &&
           candidate.addedSugar100g === 0 &&
-          (candidate.sodiumMg100g < scannedSodium || candidate.dietaryFiber100g > scannedFiber)
+          (candidate.sodiumMg100g < scannedSodium || (scannedFiber !== null && candidate.dietaryFiber100g > scannedFiber))
         );
       }
 
@@ -260,6 +262,7 @@ export class SwapsService {
       const hasLowerSodium = candidate.sodiumMg100g <= scannedSodium * 0.8 && scannedSodium > 0;
       const hasLowerFat = candidate.saturatedFat100g <= scannedSatFat * 0.8 && scannedSatFat > 0;
       const hasMoreFiber =
+        scannedFiber !== null &&
         candidate.dietaryFiber100g >= scannedFiber * 1.2 &&
         candidate.dietaryFiber100g - scannedFiber >= 1 &&
         candidate.addedSugar100g <= scannedAddedSugar;
@@ -304,7 +307,7 @@ export class SwapsService {
       const deltaSugar = calculateDelta('Added Sugar', scannedAddedSugar, candidate.addedSugar100g, 'g', true);
       const deltaSodium = calculateDelta('Sodium', scannedSodium, candidate.sodiumMg100g, 'mg', true);
       const deltaSatFat = calculateDelta('Saturated Fat', scannedSatFat, candidate.saturatedFat100g, 'g', true);
-      const deltaFiber = calculateDelta('Dietary Fiber', scannedFiber, candidate.dietaryFiber100g, 'g', false);
+      const deltaFiber = calculateDelta('Dietary Fiber', scannedFiber ?? 0, candidate.dietaryFiber100g, 'g', false);
       const deltaCalories = calculateDelta('Energy', scannedEnergy, candidate.energyKcal100g, 'kcal', true);
       const deltaPrice = calculateDelta('Price per 100g', scannedPricePer100g, candidate.pricePer100g, '₹', true);
 

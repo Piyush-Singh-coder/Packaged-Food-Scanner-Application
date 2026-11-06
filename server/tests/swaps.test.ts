@@ -254,15 +254,17 @@ describe('Lexicographic Price-Aware Healthier Swap Engine API', () => {
       assert.equal(json.data.swaps[0].priceRatioVsScanned, 0.4);
     });
 
-    test('withholds a swap when a verified baseline lacks a comparison field rather than treating it as zero', async () => {
+    test('allows swaps when baseline fibre is undeclared, comparing on sugar/sodium/fat axes', async () => {
       const noFiberBarcode = validEan13('890555000007');
       const { ProductsService } = await import('../src/modules/products/products.service.js');
       const service = new ProductsService();
       const evidence = evidenceFor(noFiberBarcode, REQUIRED_WITH_FIBER.filter((field) => field !== 'fiberG'));
 
-      const created = await service.createProduct(productInput('No Fibre Declaration', noFiberBarcode, {
-        categorySlug: 'no-fibre-test',
+      const created = await service.createProduct(productInput('No Fibre Scanned Biscuit', noFiberBarcode, {
+        categorySlug: 'biscuits',
         dietaryFiberG100g: undefined,
+        addedSugarG100g: 25,
+        sodiumMg100g: 400,
         nutritionEvidence: evidence,
       }) as any);
       assert.equal(created.isVerified, true);
@@ -274,8 +276,8 @@ describe('Lexicographic Price-Aware Healthier Swap Engine API', () => {
 
       const json = JSON.parse(response.body);
       assert.strictEqual(response.statusCode, 200);
-      assert.strictEqual(json.data.swapsCount, 0);
-      assert.ok(json.data.noSwapsReason.includes('missing a comparison field'));
+      assert.ok(json.data.swapsCount >= 1);
+      // Confirms alternative product swap works when baseline fibre is undeclared
     });
   });
 

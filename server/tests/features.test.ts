@@ -622,7 +622,7 @@ describe('Advanced Product Intelligence Features', () => {
   });
 
   describe('11. Mass Conservation with Minerals & IFCT 2017 Staple Bounds Check', () => {
-    test('enforces mass balance limit of 102.0g including sodium and marks CORRUPT when breached', () => {
+    test('enforces mass balance limit of 100.0g for macronutrients and marks CORRUPT when breached', () => {
       const impossibleMass = NutrientVerifier.normalize({
         productName: 'Over-mass bar',
         brand: 'Test',

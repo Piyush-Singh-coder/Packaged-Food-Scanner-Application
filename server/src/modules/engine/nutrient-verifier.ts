@@ -184,21 +184,15 @@ export class NutrientVerifier {
           : `Caloric calculation is implausible (declared ${declaredKcal} kcal vs calculated ${calculatedKcal} kcal, ${discrepancyPercent}% difference exceeds the 20% tolerance limit).`;
 
     const massAvailable = macrosAvailable;
-    const sodiumG = p.sodiumMg !== null
-      ? p.sodiumMg / 1000.0
-      : p.saltG !== null
-        ? p.saltG * 0.4
-        : 0;
     const totalMacroGrams = massAvailable
       ? Number((p.proteinG! + p.carbsG! + p.totalFatG!).toFixed(1))
       : null;
-    const totalMassWithSodium = totalMacroGrams !== null ? Number((totalMacroGrams + sodiumG).toFixed(2)) : null;
-    const massPassed = totalMassWithSodium !== null && totalMassWithSodium <= 102.0;
+    const massPassed = totalMacroGrams !== null && totalMacroGrams <= 100.0;
     const massReason = massPassed
-      ? `Macronutrient total (${totalMacroGrams}g per 100g) is within physical limits (total including mineral mass: ${totalMassWithSodium}g <= 102.0g).`
+      ? `Macronutrient total (${totalMacroGrams}g per 100g) is within physical limits (protein + carbs + totalFat <= 100.0g).`
       : totalMacroGrams === null
         ? 'Macronutrient mass cannot be checked because protein, carbohydrate, or fat is missing.'
-        : `Data error: Macronutrients and minerals total ${totalMassWithSodium}g per 100g, physically exceeding package mass limit of 102.0g.`;
+        : `Data error: Macronutrients total ${totalMacroGrams}g per 100g, physically exceeding package mass limit of 100.0g.`;
 
     const sugarInCarbsPassed = p.totalSugarG !== null && p.carbsG !== null && p.totalSugarG <= p.carbsG;
     if (!sugarInCarbsPassed) notes.push('Sugar/carbohydrate consistency cannot be confirmed or the declared sugar exceeds carbohydrates.');
@@ -262,7 +256,7 @@ export class NutrientVerifier {
       && sodiumSaltPassed;
 
     let overallConfidence: 'HIGH' | 'SUSPECT' | 'CORRUPT' = 'HIGH';
-    if ((totalMacroGrams !== null && totalMacroGrams > 102.0)
+    if ((totalMacroGrams !== null && totalMacroGrams > 100.0)
       || (discrepancyRatio !== null && discrepancyRatio > ATWATER_MAX_TOLERANCE)
       || sodiumSaltMismatch
       || (stapleBoundsCheck?.isStaple && !stapleBoundsCheck.passed)) {

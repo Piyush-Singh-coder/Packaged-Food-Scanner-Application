@@ -34,7 +34,9 @@ export class ProductsController {
    */
   public handleCreate = async (request: FastifyRequest, reply: FastifyReply) => {
     const input = createProductSchema.parse(request.body);
-    const result = await this.productsService.createProduct(input);
+    const userRole = (request.user as any)?.role;
+    const isTrusted = userRole === 'ADMIN';
+    const result = await this.productsService.createProduct(input, { isTrusted });
     return reply.status(201).send({
       success: true,
       data: result,

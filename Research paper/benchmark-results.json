@@ -1,0 +1,1998 @@
+{
+  "generatedAt": "2026-11-06T16:44:16.403Z",
+  "node": "v23.5.0",
+  "platform": "win32 x64",
+  "bases": 13,
+  "totalCases": 195,
+  "summary": {
+    "cleanGraded": "13/13",
+    "corruptingBlocked": "78/78",
+    "structuralBlocked": "65/65",
+    "arithmeticBlocked": "0/39",
+    "arithmeticWarned": "39/39"
+  },
+  "byFault": {
+    "Clean label": {
+      "total": 13,
+      "blocked": 0,
+      "warn": 0
+    },
+    "Energy inflated by 50%": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 13
+    },
+    "Energy deflated by 50%": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 13
+    },
+    "Energy decimal shift (x10)": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 13
+    },
+    "Zero energy with non-zero macros": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 13
+    },
+    "Mass inflation (+40 g carbohydrate)": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 13
+    },
+    "Sodium/salt stoichiometric conflict": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 13
+    },
+    "Added sugar exceeds total sugar": {
+      "total": 13,
+      "blocked": 0,
+      "warn": 13
+    },
+    "Total sugar exceeds carbohydrate": {
+      "total": 13,
+      "blocked": 0,
+      "warn": 13
+    },
+    "Saturated fat exceeds total fat": {
+      "total": 13,
+      "blocked": 0,
+      "warn": 13
+    },
+    "Added sugar field absent": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 13
+    },
+    "Trans fat field absent": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 0
+    },
+    "Sodium field absent": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 13
+    },
+    "Evidence basis mismatch (per-serving evidence)": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 0
+    },
+    "Unverified evidence": {
+      "total": 13,
+      "blocked": 13,
+      "warn": 0
+    }
+  },
+  "latencies": [
+    {
+      "label": "Layer 1 consistency audit (single label)",
+      "iterations": 20000,
+      "trials": 3,
+      "p50_us": 9.3,
+      "p95_us": 16.6,
+      "p99_us": 44.9,
+      "mean_us": 12.179864999999936,
+      "p50_range_us": {
+        "min": 8.2,
+        "max": 9.5
+      },
+      "p99_range_us": {
+        "min": 33.9,
+        "max": 48.2
+      },
+      "runs": [
+        {
+          "p50_us": 9.5,
+          "p95_us": 20,
+          "p99_us": 48.2,
+          "mean_us": 13.386014999999956
+        },
+        {
+          "p50_us": 9.3,
+          "p95_us": 16.6,
+          "p99_us": 44.9,
+          "mean_us": 12.179864999999936
+        },
+        {
+          "p50_us": 8.2,
+          "p95_us": 15.8,
+          "p99_us": 33.9,
+          "mean_us": 10.639674999999801
+        }
+      ]
+    },
+    {
+      "label": "Full deterministic evaluation (single label)",
+      "iterations": 10000,
+      "trials": 3,
+      "p50_us": 264.1,
+      "p95_us": 1418.8,
+      "p99_us": 2711.4,
+      "mean_us": 491.88517999999925,
+      "p50_range_us": {
+        "min": 240.6,
+        "max": 309.2
+      },
+      "p99_range_us": {
+        "min": 2320.8,
+        "max": 2876.8
+      },
+      "runs": [
+        {
+          "p50_us": 309.2,
+          "p95_us": 1488.3,
+          "p99_us": 2876.8,
+          "mean_us": 535.1163000000001
+        },
+        {
+          "p50_us": 264.1,
+          "p95_us": 1418.8,
+          "p99_us": 2711.4,
+          "mean_us": 491.88517999999925
+        },
+        {
+          "p50_us": 240.6,
+          "p95_us": 1273,
+          "p99_us": 2320.8,
+          "mean_us": 448.46493999999984
+        }
+      ]
+    },
+    {
+      "label": "Full evaluation, 13-label batch",
+      "iterations": 500,
+      "trials": 3,
+      "p50_us": 3371.3,
+      "p95_us": 9995.3,
+      "p99_us": 11197.8,
+      "mean_us": 4745.7104,
+      "p50_range_us": {
+        "min": 2874.2,
+        "max": 3713.7
+      },
+      "p99_range_us": {
+        "min": 10321.8,
+        "max": 19260.8
+      },
+      "runs": [
+        {
+          "p50_us": 2874.2,
+          "p95_us": 9159.2,
+          "p99_us": 10321.8,
+          "mean_us": 4181.061199999999
+        },
+        {
+          "p50_us": 3371.3,
+          "p95_us": 10621,
+          "p99_us": 19260.8,
+          "mean_us": 5051.909799999999
+        },
+        {
+          "p50_us": 3713.7,
+          "p95_us": 9995.3,
+          "p99_us": 11197.8,
+          "mean_us": 4745.7104
+        }
+      ]
+    },
+    {
+      "label": "Lexicographic ranking, 1,000 candidates",
+      "iterations": 500,
+      "trials": 3,
+      "p50_us": 167.8,
+      "p95_us": 423.9,
+      "p99_us": 658.4,
+      "mean_us": 218.1153999999999,
+      "p50_range_us": {
+        "min": 159.7,
+        "max": 187
+      },
+      "p99_range_us": {
+        "min": 547.4,
+        "max": 1364.9
+      },
+      "runs": [
+        {
+          "p50_us": 159.7,
+          "p95_us": 340.9,
+          "p99_us": 547.4,
+          "mean_us": 199.9528
+        },
+        {
+          "p50_us": 187,
+          "p95_us": 484.3,
+          "p99_us": 1364.9,
+          "mean_us": 277.2250000000001
+        },
+        {
+          "p50_us": 167.8,
+          "p95_us": 423.9,
+          "p99_us": 658.4,
+          "mean_us": 218.1153999999999
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "baseId": "biscuit",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "biscuit",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "namkeen",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "cereal",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "noodles",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "juice",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "softdrink",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "dairy",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "sauce",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "chocolate",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "maltdrink",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "infant",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "SUITABLE_FOR_REGULAR_USE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "SUITABLE_FOR_REGULAR_USE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "ENJOY_IN_MODERATION"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "yogurt",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Clean label",
+      "category": "clean",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "HIGH",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Energy inflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Energy deflated by 50%",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Energy decimal shift (x10)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Zero energy with non-zero macros",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Mass inflation (+40 g carbohydrate)",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Sodium/salt stoichiometric conflict",
+      "category": "corrupting",
+      "isGraded": false,
+      "evaluability": "NOT_EVALUABLE",
+      "confidence": "CORRUPT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Added sugar exceeds total sugar",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Total sugar exceeds carbohydrate",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Saturated fat exceeds total fat",
+      "category": "arithmetic",
+      "isGraded": true,
+      "evaluability": "EVALUABLE",
+      "confidence": "SUSPECT",
+      "grade": "BEST_KEPT_OCCASIONAL"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Added sugar field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Trans fat field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Sodium field absent",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "LABEL_INCOMPLETE",
+      "confidence": "SUSPECT",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Evidence basis mismatch (per-serving evidence)",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "BASIS_MISMATCH",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    },
+    {
+      "baseId": "oil",
+      "fault": "Unverified evidence",
+      "category": "structural",
+      "isGraded": false,
+      "evaluability": "SOURCE_UNVERIFIED",
+      "confidence": "HIGH",
+      "grade": "NOT_EVALUABLE"
+    }
+  ]
+}

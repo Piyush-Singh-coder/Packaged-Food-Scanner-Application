@@ -84,47 +84,46 @@ export function rankCandidates(
   persona: PersonaType
 ): EvaluatedCandidate[] {
   return [...candidates].sort((a, b) => {
+    let diff = 0;
     switch (persona) {
       case 'DIABETIC': {
         // 1. Lowest added sugar
         if (a.addedSugar100g !== b.addedSugar100g) {
-          return safeAsc(a.addedSugar100g, b.addedSugar100g);
+          diff = safeAsc(a.addedSugar100g, b.addedSugar100g);
+        } else if (a.highGiCarbTags.length !== b.highGiCarbTags.length) {
+          // 2. Fewest high-GI refined carbohydrate tags (maltodextrin, dextrose, etc.)
+          diff = a.highGiCarbTags.length - b.highGiCarbTags.length;
+        } else if (a.dietaryFiber100g !== b.dietaryFiber100g) {
+          // 3. Highest dietary fiber
+          diff = safeDesc(a.dietaryFiber100g, b.dietaryFiber100g);
+        } else if (a.energyKcal100g !== b.energyKcal100g) {
+          // 4. Lowest total energy
+          diff = safeAsc(a.energyKcal100g, b.energyKcal100g);
+        } else {
+          // 5. Lowest price per 100g
+          diff = safeAsc(a.pricePer100g, b.pricePer100g);
         }
-        // 2. Fewest high-GI refined carbohydrate tags (maltodextrin, dextrose, etc.)
-        if (a.highGiCarbTags.length !== b.highGiCarbTags.length) {
-          return a.highGiCarbTags.length - b.highGiCarbTags.length;
-        }
-        // 3. Highest dietary fiber
-        if (a.dietaryFiber100g !== b.dietaryFiber100g) {
-          return safeDesc(a.dietaryFiber100g, b.dietaryFiber100g);
-        }
-        // 4. Lowest total energy
-        if (a.energyKcal100g !== b.energyKcal100g) {
-          return safeAsc(a.energyKcal100g, b.energyKcal100g);
-        }
-        // 5. Lowest price per 100g
-        return safeAsc(a.pricePer100g, b.pricePer100g);
+        break;
       }
 
       case 'CARDIAC': {
         // 1. Lowest sodium
         if (a.sodiumMg100g !== b.sodiumMg100g) {
-          return safeAsc(a.sodiumMg100g, b.sodiumMg100g);
+          diff = safeAsc(a.sodiumMg100g, b.sodiumMg100g);
+        } else if (a.saturatedFat100g !== b.saturatedFat100g) {
+          // 2. Lowest saturated fat
+          diff = safeAsc(a.saturatedFat100g, b.saturatedFat100g);
+        } else if (a.transFat100g !== b.transFat100g) {
+          // 3. Lowest trans fat
+          diff = safeAsc(a.transFat100g, b.transFat100g);
+        } else if (a.dietaryFiber100g !== b.dietaryFiber100g) {
+          // 4. Highest dietary fiber
+          diff = safeDesc(a.dietaryFiber100g, b.dietaryFiber100g);
+        } else {
+          // 5. Lowest price per 100g
+          diff = safeAsc(a.pricePer100g, b.pricePer100g);
         }
-        // 2. Lowest saturated fat
-        if (a.saturatedFat100g !== b.saturatedFat100g) {
-          return safeAsc(a.saturatedFat100g, b.saturatedFat100g);
-        }
-        // 3. Lowest trans fat
-        if (a.transFat100g !== b.transFat100g) {
-          return safeAsc(a.transFat100g, b.transFat100g);
-        }
-        // 4. Highest dietary fiber
-        if (a.dietaryFiber100g !== b.dietaryFiber100g) {
-          return safeDesc(a.dietaryFiber100g, b.dietaryFiber100g);
-        }
-        // 5. Lowest price per 100g
-        return safeAsc(a.pricePer100g, b.pricePer100g);
+        break;
       }
 
       case 'RENAL': {
@@ -132,10 +131,16 @@ export function rankCandidates(
         // then minimize sodium and saturated fat.
         const aPotassium = a.insCodes.some((code) => code.toLowerCase() === '508') ? 1 : 0;
         const bPotassium = b.insCodes.some((code) => code.toLowerCase() === '508') ? 1 : 0;
-        if (aPotassium !== bPotassium) return aPotassium - bPotassium;
-        if (a.sodiumMg100g !== b.sodiumMg100g) return safeAsc(a.sodiumMg100g, b.sodiumMg100g);
-        if (a.saturatedFat100g !== b.saturatedFat100g) return safeAsc(a.saturatedFat100g, b.saturatedFat100g);
-        return safeAsc(a.pricePer100g, b.pricePer100g);
+        if (aPotassium !== bPotassium) {
+          diff = aPotassium - bPotassium;
+        } else if (a.sodiumMg100g !== b.sodiumMg100g) {
+          diff = safeAsc(a.sodiumMg100g, b.sodiumMg100g);
+        } else if (a.saturatedFat100g !== b.saturatedFat100g) {
+          diff = safeAsc(a.saturatedFat100g, b.saturatedFat100g);
+        } else {
+          diff = safeAsc(a.pricePer100g, b.pricePer100g);
+        }
+        break;
       }
 
       case 'INFANT': {
@@ -143,60 +148,63 @@ export function rankCandidates(
         const aZeroSugar = a.addedSugar100g === 0 ? 0 : 1;
         const bZeroSugar = b.addedSugar100g === 0 ? 0 : 1;
         if (aZeroSugar !== bZeroSugar) {
-          return aZeroSugar - bZeroSugar;
+          diff = aZeroSugar - bZeroSugar;
+        } else if (a.sodiumMg100g !== b.sodiumMg100g) {
+          // 2. Lowest sodium
+          diff = safeAsc(a.sodiumMg100g, b.sodiumMg100g);
+        } else if (a.insCodes.length !== b.insCodes.length) {
+          // 3. Fewest additive INS codes
+          diff = a.insCodes.length - b.insCodes.length;
+        } else {
+          // 4. Lowest saturated fat
+          diff = safeAsc(a.saturatedFat100g, b.saturatedFat100g);
         }
-        // 2. Lowest sodium
-        if (a.sodiumMg100g !== b.sodiumMg100g) {
-          return safeAsc(a.sodiumMg100g, b.sodiumMg100g);
-        }
-        // 3. Fewest additive INS codes
-        if (a.insCodes.length !== b.insCodes.length) {
-          return a.insCodes.length - b.insCodes.length;
-        }
-        // 4. Lowest saturated fat
-        return safeAsc(a.saturatedFat100g, b.saturatedFat100g);
+        break;
       }
 
       case 'CHILD': {
         // 1. Lowest added sugar
         if (a.addedSugar100g !== b.addedSugar100g) {
-          return safeAsc(a.addedSugar100g, b.addedSugar100g);
+          diff = safeAsc(a.addedSugar100g, b.addedSugar100g);
+        } else if (a.saturatedFat100g !== b.saturatedFat100g) {
+          // 2. Lowest saturated fat
+          diff = safeAsc(a.saturatedFat100g, b.saturatedFat100g);
+        } else {
+          // 3. Highest protein & fiber sum
+          const aNutritionSum = a.proteinG100g + a.dietaryFiber100g;
+          const bNutritionSum = b.proteinG100g + b.dietaryFiber100g;
+          if (aNutritionSum !== bNutritionSum) {
+            diff = safeDesc(aNutritionSum, bNutritionSum);
+          } else {
+            // 4. Lowest price per 100g
+            diff = safeAsc(a.pricePer100g, b.pricePer100g);
+          }
         }
-        // 2. Lowest saturated fat
-        if (a.saturatedFat100g !== b.saturatedFat100g) {
-          return safeAsc(a.saturatedFat100g, b.saturatedFat100g);
-        }
-        // 3. Highest protein & fiber sum
-        const aNutritionSum = a.proteinG100g + a.dietaryFiber100g;
-        const bNutritionSum = b.proteinG100g + b.dietaryFiber100g;
-        if (aNutritionSum !== bNutritionSum) {
-          return safeDesc(aNutritionSum, bNutritionSum);
-        }
-        // 4. Lowest price per 100g
-        return safeAsc(a.pricePer100g, b.pricePer100g);
+        break;
       }
 
       case 'ADULT':
       default: {
         // 1. Fewest ICMR Table 15.1 HFSS breaches
         if (a.hfssBreachCount !== b.hfssBreachCount) {
-          return a.hfssBreachCount - b.hfssBreachCount;
+          diff = a.hfssBreachCount - b.hfssBreachCount;
+        } else if (a.addedSugar100g !== b.addedSugar100g) {
+          // 2. Lowest added sugar
+          diff = safeAsc(a.addedSugar100g, b.addedSugar100g);
+        } else if (a.sodiumMg100g !== b.sodiumMg100g) {
+          // 3. Lowest sodium
+          diff = safeAsc(a.sodiumMg100g, b.sodiumMg100g);
+        } else if (a.dietaryFiber100g !== b.dietaryFiber100g) {
+          // 4. Highest dietary fiber
+          diff = safeDesc(a.dietaryFiber100g, b.dietaryFiber100g);
+        } else {
+          // 5. Lowest price per 100g
+          diff = safeAsc(a.pricePer100g, b.pricePer100g);
         }
-        // 2. Lowest added sugar
-        if (a.addedSugar100g !== b.addedSugar100g) {
-          return safeAsc(a.addedSugar100g, b.addedSugar100g);
-        }
-        // 3. Lowest sodium
-        if (a.sodiumMg100g !== b.sodiumMg100g) {
-          return safeAsc(a.sodiumMg100g, b.sodiumMg100g);
-        }
-        // 4. Highest dietary fiber
-        if (a.dietaryFiber100g !== b.dietaryFiber100g) {
-          return safeDesc(a.dietaryFiber100g, b.dietaryFiber100g);
-        }
-        // 5. Lowest price per 100g
-        return safeAsc(a.pricePer100g, b.pricePer100g);
+        break;
       }
     }
+    if (diff !== 0) return diff;
+    return a.barcodeGtin.localeCompare(b.barcodeGtin);
   });
 }

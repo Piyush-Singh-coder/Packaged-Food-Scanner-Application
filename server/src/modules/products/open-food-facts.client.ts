@@ -211,19 +211,99 @@ export class OpenFoodFactsClient {
     let totalFatG = this.numberOrUndef(nutriments['fat_100g']);
     let saturatedFatG = this.numberOrUndef(nutriments['saturated-fat_100g']);
     let transFatG = this.numberOrUndef(nutriments['trans-fat_100g']);
-    const cholesterolMg = this.numberOrUndef(nutriments['cholesterol_100g']);
-    const saltG = this.numberOrUndef(nutriments['salt_100g']);
-    let sodiumMg = this.numberOrUndef(nutriments['sodium_100g']);
+
+    // Cholesterol safe unit conversion (OFF standardizes _100g to grams)
+    const rawChol = this.numberOrUndef(nutriments['cholesterol_100g'] ?? nutriments['cholesterol_value']);
+    const cholUnit = typeof nutriments['cholesterol_unit'] === 'string'
+      ? nutriments['cholesterol_unit'].trim().toLowerCase()
+      : undefined;
+    let cholesterolMg: number | undefined;
+
+    if (rawChol !== undefined) {
+      if (rawChol === 0) {
+        cholesterolMg = 0;
+      } else if (cholUnit === 'mg') {
+        cholesterolMg = Number(rawChol.toFixed(1));
+      } else if (cholUnit === 'g') {
+        cholesterolMg = Number((rawChol * 1000).toFixed(1));
+      } else if (cholUnit === 'mcg' || cholUnit === 'µg') {
+        cholesterolMg = Number((rawChol / 1000).toFixed(1));
+      } else {
+        // Missing unit fallback: OFF database standardizes to grams.
+        // Packaged food rarely exceeds 2g (2000mg) cholesterol/100g.
+        cholesterolMg = rawChol > 0 && rawChol <= 2.0
+          ? Number((rawChol * 1000).toFixed(1))
+          : Number(rawChol.toFixed(1));
+      }
+      // Sanitize physically impossible values (> 5000mg / 100g)
+      if (cholesterolMg !== undefined && cholesterolMg > 5000) {
+        cholesterolMg = undefined;
+      }
+    }
+
+    const saltG = this.numberOrUndef(nutriments['salt_100g'] ?? nutriments['salt_value']);
+    const rawSodium = this.numberOrUndef(nutriments['sodium_100g'] ?? nutriments['sodium_value']);
+    const sodiumUnit = typeof nutriments['sodium_unit'] === 'string'
+      ? nutriments['sodium_unit'].trim().toLowerCase()
+      : undefined;
+    let sodiumMg: number | undefined;
+
+    if (rawSodium !== undefined) {
+      if (rawSodium === 0) {
+        sodiumMg = 0;
+      } else if (saltG !== undefined && saltG > 0) {
+        const expectedFromSalt = saltG * 400.0;
+        const isMgConsistent = Math.abs(expectedFromSalt - rawSodium) / rawSodium < 0.20;
+        const isGramConsistent = Math.abs(expectedFromSalt - rawSodium * 1000) / (rawSodium * 1000) < 0.20;
+
+        if (isGramConsistent && !isMgConsistent) {
+          sodiumMg = Number((rawSodium * 1000).toFixed(1));
+        } else if (isMgConsistent && !isGramConsistent) {
+          sodiumMg = Number(rawSodium.toFixed(1));
+        } else {
+          // Stoichiometric check inconclusive or conflicting; fall back to unit string or magnitude
+          if (sodiumUnit === 'g') {
+            sodiumMg = Number((rawSodium * 1000).toFixed(1));
+          } else if (sodiumUnit === 'mg') {
+            sodiumMg = Number(rawSodium.toFixed(1));
+          } else if (sodiumUnit === 'mcg' || sodiumUnit === 'µg') {
+            sodiumMg = Number((rawSodium / 1000).toFixed(1));
+          } else {
+            // Values < 1 in packaged food are universally grams (e.g. 0.25g = 250mg)
+            sodiumMg = rawSodium < 1.0
+              ? Number((rawSodium * 1000).toFixed(1))
+              : Number(rawSodium.toFixed(1));
+          }
+        }
+      } else {
+        // Salt is missing or 0: rely on sodium_unit
+        if (sodiumUnit === 'g') {
+          sodiumMg = Number((rawSodium * 1000).toFixed(1));
+        } else if (sodiumUnit === 'mg') {
+          sodiumMg = Number(rawSodium.toFixed(1));
+        } else if (sodiumUnit === 'mcg' || sodiumUnit === 'µg') {
+          sodiumMg = Number((rawSodium / 1000).toFixed(1));
+        } else {
+          sodiumMg = rawSodium < 1.0
+            ? Number((rawSodium * 1000).toFixed(1))
+            : Number(rawSodium.toFixed(1));
+        }
+      }
+
+      // Sanitize: pure NaCl contains 39,340 mg Na / 100g; > 40,000 mg is physically impossible
+      if (sodiumMg !== undefined && sodiumMg > 40000) {
+        sodiumMg = undefined;
+      }
+    } else if (saltG !== undefined && saltG >= 0) {
+      // Sodium absent but salt present: derive sodium stoichiometrically (NaCl ~39.34% Na)
+      sodiumMg = Number((saltG * 400.0).toFixed(1));
+    }
+
     const fiberG = this.numberOrUndef(nutriments['fiber_100g']);
 
     // Check if at least core energy or macros exist
     if (energyKcal === undefined && proteinG === undefined && carbsG === undefined) {
       return null;
-    }
-
-    // Normalise sodium if OFF stores it in grams
-    if (sodiumMg !== undefined && sodiumMg < 20 && saltG !== undefined) {
-      sodiumMg = Number((sodiumMg * 1000).toFixed(1));
     }
 
     // --- DATA SANITIZATION & HIERARCHY CLEANSING ---

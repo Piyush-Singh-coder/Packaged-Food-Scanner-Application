@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike, or } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, or } from 'drizzle-orm';
 import { db, isDatabaseAvailable } from '../../db/index.js';
 import { products, type Product } from '../../db/schema/products.js';
 import { normalizeBarcode } from '../../common/utils/barcode.js';
@@ -15,8 +15,17 @@ import type {
   CompleteEvaluationOutput,
   NutritionDeclarationBasis,
   NutritionEvidenceMap,
+  NutritionField,
   RawNutritionInput,
 } from '../engine/types.js';
+
+export interface EvidenceReceipt {
+  verificationTimestamp?: string | null;
+  dataProvenance: string;
+  isVerified: boolean;
+  artifactCount: number;
+  sourceBreakdown?: Record<string, string>;
+}
 
 export interface ProductEvaluationResponse {
   found: true;
@@ -37,6 +46,7 @@ export interface ProductEvaluationResponse {
     dataProvenance: string;
   };
   evaluation: CompleteEvaluationOutput;
+  evidenceReceipt: EvidenceReceipt;
 }
 
 function optionalNumber(value: string | null | undefined): number | undefined {
@@ -110,6 +120,10 @@ function optionalString(value: number | undefined): string | null {
   return value === undefined ? null : String(value);
 }
 
+function escapeSqlWildcards(str: string): string {
+  return str.replace(/[%_\\]/g, '\\$&');
+}
+
 function isSeedCatalogVisible(): boolean {
   return env.NODE_ENV !== 'production';
 }
@@ -168,7 +182,7 @@ export class ProductsService {
       try {
         dbProduct = await db.query.products.findFirst({
           where: eq(products.barcodeGtin, gtin),
-          orderBy: [desc(products.formulationVersion)],
+          orderBy: [desc(products.isVerified), desc(products.formulationVersion)],
         });
       } catch (err) {
         if (env.NODE_ENV === 'production') throw err;
@@ -183,6 +197,17 @@ export class ProductsService {
         ? rawInput
         : { ...rawInput, nutritionEvidence: {} };
       const evaluation = EvaluationService.evaluate(evaluationInput);
+      const isVerified = dbProduct.isVerified
+        && evaluation.sourceIntegrity.completeForEvaluation
+        && evaluation.consistencyAudit.overallConfidence !== 'CORRUPT';
+      const evidence = dbProduct.nutritionEvidence ?? {};
+      const sourceBreakdown: Record<string, string> = {};
+      for (const [k, v] of Object.entries(evidence)) {
+        if (v && typeof v === 'object' && 'kind' in v && v.kind) {
+          sourceBreakdown[k] = String(v.kind);
+        }
+      }
+
       return {
         found: true,
         barcode: gtin,
@@ -198,12 +223,17 @@ export class ProductsService {
           packageWeightG: requiredNumber(dbProduct.packageWeightG, 'packageWeightG'),
           servingSizeG: requiredNumber(dbProduct.servingSizeG, 'servingSizeG'),
           mrpInr: requiredNumber(dbProduct.mrpInr, 'mrpInr'),
-          isVerified: dbProduct.isVerified
-            && evaluation.sourceIntegrity.completeForEvaluation
-            && evaluation.consistencyAudit.overallConfidence !== 'CORRUPT',
+          isVerified,
           dataProvenance: dbProduct.dataProvenance,
         },
         evaluation,
+        evidenceReceipt: {
+          verificationTimestamp: dbProduct.updatedAt?.toISOString() ?? null,
+          dataProvenance: dbProduct.dataProvenance,
+          isVerified,
+          artifactCount: Object.keys(evidence).length,
+          sourceBreakdown,
+        },
       };
     }
 
@@ -217,6 +247,17 @@ export class ProductsService {
         ? memItem
         : { ...memItem, nutritionEvidence: {} };
       const evaluation = EvaluationService.evaluate(evaluationInput);
+      const isVerified = memItem.isVerified
+        && evaluation.sourceIntegrity.completeForEvaluation
+        && evaluation.consistencyAudit.overallConfidence !== 'CORRUPT';
+      const evidence = memItem.nutritionEvidence ?? {};
+      const sourceBreakdown: Record<string, string> = {};
+      for (const [k, v] of Object.entries(evidence)) {
+        if (v && typeof v === 'object' && 'kind' in v && v.kind) {
+          sourceBreakdown[k] = String(v.kind);
+        }
+      }
+
       return {
         found: true,
         barcode: gtin,
@@ -232,12 +273,17 @@ export class ProductsService {
           packageWeightG: memItem.packageWeightGrams,
           servingSizeG: memItem.servingSizeGrams,
           mrpInr: memItem.mrpInr,
-          isVerified: memItem.isVerified
-            && evaluation.sourceIntegrity.completeForEvaluation
-            && evaluation.consistencyAudit.overallConfidence !== 'CORRUPT',
+          isVerified,
           dataProvenance: memItem.dataProvenance,
         },
         evaluation,
+        evidenceReceipt: {
+          verificationTimestamp: null,
+          dataProvenance: memItem.dataProvenance,
+          isVerified,
+          artifactCount: Object.keys(evidence).length,
+          sourceBreakdown,
+        },
       };
     }
 
@@ -265,6 +311,13 @@ export class ProductsService {
           dataProvenance: 'OPEN_FOOD_FACTS_COMMUNITY',
         },
         evaluation,
+        evidenceReceipt: {
+          verificationTimestamp: null,
+          dataProvenance: 'OPEN_FOOD_FACTS_COMMUNITY',
+          isVerified: false,
+          artifactCount: 0,
+          sourceBreakdown: {},
+        },
       };
     }
 
@@ -292,11 +345,28 @@ export class ProductsService {
     if (await isDatabaseAvailable()) {
       try {
         const filters = [];
-        if (q) filters.push(or(ilike(products.productName, `%${q}%`), ilike(products.brandName, `%${q}%`)));
-        if (category) filters.push(ilike(products.categorySlug, `%${category}%`));
+        if (q) {
+          const escapedQ = escapeSqlWildcards(q);
+          filters.push(or(ilike(products.productName, `%${escapedQ}%`), ilike(products.brandName, `%${escapedQ}%`)));
+        }
+        if (category) {
+          const escapedCat = escapeSqlWildcards(category);
+          filters.push(ilike(products.categorySlug, `%${escapedCat}%`));
+        }
         const where = filters.length > 0 ? and(...filters) : undefined;
         const [rows, [{ total }]] = await Promise.all([
-          db.select().from(products).where(where).limit(limit).offset(offset),
+          db
+            .select()
+            .from(products)
+            .where(where)
+            .orderBy(
+              desc(products.isVerified),
+              asc(products.productName),
+              asc(products.barcodeGtin),
+              desc(products.formulationVersion)
+            )
+            .limit(limit)
+            .offset(offset),
           db.select({ total: count() }).from(products).where(where),
         ]);
 
@@ -415,7 +485,10 @@ export class ProductsService {
    * A client or admin cannot self-declare "verified": verification is derived
    * only from a complete, permitted source-evidence map.
    */
-  public async createProduct(input: CreateProductInput): Promise<{
+  public async createProduct(
+    input: CreateProductInput,
+    options: { isTrusted?: boolean } = { isTrusted: true }
+  ): Promise<{
     success: true;
     barcode: string;
     message: string;
@@ -446,6 +519,23 @@ export class ProductsService {
       }
     }
 
+    const isTrustedCaller = options?.isTrusted ?? true;
+
+    // Sanitize evidence: untrusted callers cannot claim VERIFIED status
+    let rawEvidence = input.nutritionEvidence as NutritionEvidenceMap | undefined;
+    if (!isTrustedCaller && rawEvidence) {
+      const downgraded: NutritionEvidenceMap = {};
+      for (const [key, ev] of Object.entries(rawEvidence)) {
+        if (ev) {
+          downgraded[key as NutritionField] = {
+            ...ev,
+            verificationStatus: 'TRANSCRIBED_UNVERIFIED',
+          };
+        }
+      }
+      rawEvidence = downgraded;
+    }
+
     let rawInput: RawNutritionInput = {
       productName: input.productName,
       brand: input.brandName,
@@ -469,7 +559,7 @@ export class ProductsService {
       saltG: input.saltG100g,
       fiberG: input.dietaryFiberG100g,
       ingredientsText: input.ingredientsRawText,
-      nutritionEvidence: input.nutritionEvidence as NutritionEvidenceMap | undefined,
+      nutritionEvidence: rawEvidence,
     };
 
     // Persist the sodium/salt companion with explicit DERIVED evidence. This
@@ -488,7 +578,7 @@ export class ProductsService {
     }
 
     const sourceReport = SourceBackedNutritionEngine.inspect(rawInput);
-    const isVerified = sourceReport.completeForEvaluation;
+    const isVerified = isTrustedCaller && sourceReport.completeForEvaluation;
     const provenance = isVerified ? 'VERIFIED_PACK' : 'USER_CONTRIBUTED_PENDING';
     const parsedIngredients = IngredientParser.parse(input.ingredientsRawText);
 
@@ -546,7 +636,10 @@ export class ProductsService {
           dataProvenance: provenance,
           isVerified,
         });
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.code === '23505') {
+          throw new ConflictError(`A product with barcode ${gtin} already exists; use a formulation-version workflow for reformulations.`);
+        }
         if (env.NODE_ENV === 'production') throw err;
       }
     }
